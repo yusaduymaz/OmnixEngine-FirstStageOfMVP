@@ -2,9 +2,9 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'ContentForge TR — Trendyol & Hepsiburada için AI İçerik Üreteci',
+  title: 'OmniX Engine — Global Pazaryerleri için AI İçerik Üreteci',
   description:
-    'Yapay zeka ile Trendyol ve Hepsiburada için saniyeler içinde SEO uyumlu, satış odaklı ürün başlığı ve açıklaması üretin. 50 üretim kredisi ücretsiz.',
+    'Global pazaryerleri ve e-ticaret altyapıları (Shopify, Amazon, Etsy) için çok kanallı AI motoru. Saniyeler içinde SEO uyumlu metinler yazın, stüdyo kalitesinde ürün görselleri üretin ve listelemelerinizi analiz edin.',
 }
 
 // ─── Alt Komponentler ────────────────────────────────────────────────────────
@@ -24,16 +24,17 @@ function NavBar() {
             className="text-xl font-bold text-[#1A1A2E] tracking-tight"
             style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}
           >
-            ContentForge TR
+            OmniX Engine
           </span>
         </Link>
 
         {/* Menü */}
         <div className="hidden md:flex items-center gap-8 text-sm font-semibold" style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}>
-          <a href="#ozellikler" className="text-[#FF6B35] border-b-2 border-[#FF6B35] pb-0.5">Platform</a>
-          <a href="#nasil-calisir" className="text-[#6B6B7B] hover:text-[#1A1A2E] transition-colors">Nasıl Çalışır?</a>
-          <a href="#entegrasyon" className="text-[#6B6B7B] hover:text-[#1A1A2E] transition-colors">Entegrasyonlar</a>
-          <a href="#fiyat" className="text-[#6B6B7B] hover:text-[#1A1A2E] transition-colors">Fiyatlandırma</a>
+          <Link href="/" className="text-[#FF6B35] border-b-2 border-[#FF6B35] pb-0.5">Anasayfa</Link>
+          <Link href="/hakkimizda" className="text-[#6B6B7B] hover:text-[#1A1A2E] transition-colors">Hakkımızda</Link>
+          <Link href="/hizmetlerimiz" className="text-[#6B6B7B] hover:text-[#1A1A2E] transition-colors">Hizmetlerimiz</Link>
+          <Link href="/entegrasyonlar" className="text-[#6B6B7B] hover:text-[#1A1A2E] transition-colors">Entegrasyonlar</Link>
+          <Link href="/iletisim" className="text-[#6B6B7B] hover:text-[#1A1A2E] transition-colors">İletişim</Link>
         </div>
 
         {/* CTA'lar */}
@@ -83,14 +84,16 @@ function HeroSection() {
               className="text-5xl md:text-6xl xl:text-7xl font-extrabold tracking-tighter leading-[1.05] text-[#1A1A2E]"
               style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}
             >
-              Trendyol &amp;{' '}
-              <span className="text-[#FF6B35]">Hepsiburada</span>{' '}
-              için AI ile İçerik Üret
+              YENİ NESİL {' '}
+              <span className="text-[#FF6B35]">OMNICHANNEL</span>
+              <br />
+              {' '}AI MOTORU
             </h1>
 
             <p className="text-lg md:text-xl text-[#6B6B7B] max-w-xl leading-relaxed">
-              Platform kurallarına uygun, SEO&apos;ya göre optimize edilmiş ürün başlığı, açıklama ve
-              reklam metinlerini <strong className="text-[#1A1A2E]">8 saniyede</strong> oluşturun.
+              Shopify, Amazon, Etsy ve yerel pazaryerleri... Tek bir
+              tıkla her platformun algoritmasına özel, yüksek dönüşümlü <strong className="text-[#1A1A2E]">ürün
+                listelemeleri</strong> ve <strong className="text-[#1A1A2E]">görselleri</strong> oluşturun.
             </p>
 
             <div className="flex flex-wrap gap-4">
@@ -103,12 +106,12 @@ function HeroSection() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
               </Link>
-              <a
-                href="#nasil-calisir"
+              <Link
+                href="/hizmetlerimiz"
                 className="inline-flex items-center gap-2 bg-white text-[#1A1A2E] border border-[#E8E4DC] px-8 py-4 rounded-xl font-bold text-base hover:border-[#FF6B35]/40 hover:bg-[#F8F7F4] transition-all"
               >
                 Nasıl Çalışır?
-              </a>
+              </Link>
             </div>
 
             {/* Sosyal kanıt */}
@@ -313,7 +316,7 @@ function HowItWorksSection() {
     {
       n: '2',
       title: 'AI Analizi Başlat',
-      desc: 'ContentForge TR, platform kurallarını ve SEO mantığını uygulayarak içeriği saniyeler içinde üretir.',
+      desc: 'OmniX Engine, platform kurallarını ve SEO mantığını uygulayarak içeriği saniyeler içinde üretir.',
     },
     {
       n: '3',
@@ -501,11 +504,10 @@ function PricingSection() {
           {plans.map((plan, i) => (
             <div
               key={i}
-              className={`relative rounded-2xl p-6 border transition-all ${
-                plan.highlight
-                  ? 'bg-[#1A1A2E] border-[#1A1A2E] shadow-xl shadow-[#1A1A2E]/20'
-                  : 'bg-white border-[#E8E4DC] hover:shadow-md'
-              }`}
+              className={`relative rounded-2xl p-6 border transition-all ${plan.highlight
+                ? 'bg-[#1A1A2E] border-[#1A1A2E] shadow-xl shadow-[#1A1A2E]/20'
+                : 'bg-white border-[#E8E4DC] hover:shadow-md'
+                }`}
             >
               {plan.highlight && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -551,11 +553,10 @@ function PricingSection() {
 
               <Link
                 href={plan.href}
-                className={`block w-full py-3 rounded-xl text-center text-sm font-bold transition-all ${
-                  plan.highlight
-                    ? 'bg-[#FF6B35] text-white hover:bg-[#e85d2a] shadow-sm'
-                    : 'border border-[#E8E4DC] text-[#1A1A2E] hover:border-[#FF6B35] hover:text-[#FF6B35]'
-                }`}
+                className={`block w-full py-3 rounded-xl text-center text-sm font-bold transition-all ${plan.highlight
+                  ? 'bg-[#FF6B35] text-white hover:bg-[#e85d2a] shadow-sm'
+                  : 'border border-[#E8E4DC] text-[#1A1A2E] hover:border-[#FF6B35] hover:text-[#FF6B35]'
+                  }`}
               >
                 {plan.cta}
               </Link>
@@ -586,7 +587,7 @@ function CTASection() {
             Satışlarınızı Katlamaya Hazır Mısınız?
           </h2>
           <p className="text-orange-100 text-xl font-medium leading-relaxed">
-            Yüzlerce Türk e-ticaret satıcısı ContentForge TR ile zaman kazanıyor ve dönüşüm
+            Yüzlerce e-ticaret satıcısı OmniX Engine ile zaman kazanıyor ve dönüşüm
             oranlarını artırıyor. Bugün aramıza katılın.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
@@ -613,39 +614,39 @@ function CTASection() {
 }
 
 function Footer() {
-  const cols = [
-    {
-      title: 'Ürün',
-      links: ['Özellikler', 'Entegrasyonlar', 'Fiyatlandırma', 'Yeni Gelenler'],
-    },
-    {
-      title: 'Şirket',
-      links: ['Hakkımızda', 'Kariyer', 'Blog', 'İletişim'],
-    },
-    {
-      title: 'Yasal',
-      links: ['Gizlilik Politikası', 'Kullanım Koşulları', 'KVKK', 'Güvenlik'],
-    },
+  const productLinks = [
+    { label: 'Hizmetlerimiz', href: '/hizmetlerimiz' },
+    { label: 'Entegrasyonlar', href: '/entegrasyonlar' },
+    { label: 'Hakkımızda', href: '/hakkimizda' },
+    { label: 'İletişim', href: '/iletisim' },
+  ]
+
+  const legalLinks = [
+    { label: 'Gizlilik Politikası', href: '#' },
+    { label: 'Kullanım Koşulları', href: '#' },
+    { label: 'KVKK', href: '#' },
   ]
 
   return (
     <footer className="bg-white border-t border-[#E8E4DC] py-16">
-      <div className="max-w-7xl mx-auto px-6 md:px-8 grid grid-cols-2 md:grid-cols-5 gap-10">
+      <div className="max-w-7xl mx-auto px-6 md:px-8 grid grid-cols-2 md:grid-cols-4 gap-10">
         {/* Marka */}
         <div className="col-span-2">
           <div className="flex items-center gap-2.5 mb-5">
             <div className="w-7 h-7 rounded-lg bg-[#FF6B35] flex items-center justify-center">
-              <span className="text-white font-bold text-xs">CF</span>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="text-white">
+                <path d="M8 1L10.5 6H14L11 9.5L12.5 15L8 12L3.5 15L5 9.5L2 6H5.5L8 1Z" fill="currentColor" />
+              </svg>
             </div>
             <span
               className="text-lg font-bold text-[#1A1A2E]"
               style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}
             >
-              ContentForge TR
+              OmniX Engine
             </span>
           </div>
           <p className="text-[#6B6B7B] text-sm leading-relaxed max-w-xs mb-6">
-            Türk e-ticaret satıcıları için yapay zeka destekli, platform kurallarına uyumlu SEO içerik üreteci.
+            Global pazaryerleri ve e-ticaret altyapıları için çok kanallı AI içerik, analiz ve görsel motoru.
           </p>
           <div className="flex items-center gap-2 text-xs text-[#9E9EA8]">
             <span className="w-2 h-2 rounded-full bg-green-400" />
@@ -653,26 +654,38 @@ function Footer() {
           </div>
         </div>
 
-        {/* Nav kolonları */}
-        {cols.map((col) => (
-          <div key={col.title} className="space-y-4">
-            <p className="font-bold text-[#1A1A2E] text-sm">{col.title}</p>
-            <ul className="space-y-3">
-              {col.links.map((link) => (
-                <li key={link}>
-                  <a href="#" className="text-sm text-[#6B6B7B] hover:text-[#FF6B35] transition-colors">
-                    {link}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+        {/* Sayfa Linkleri */}
+        <div className="space-y-4">
+          <p className="font-bold text-[#1A1A2E] text-sm">Ürün</p>
+          <ul className="space-y-3">
+            {productLinks.map((link) => (
+              <li key={link.label}>
+                <Link href={link.href} className="text-sm text-[#6B6B7B] hover:text-[#FF6B35] transition-colors">
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Yasal */}
+        <div className="space-y-4">
+          <p className="font-bold text-[#1A1A2E] text-sm">Yasal</p>
+          <ul className="space-y-3">
+            {legalLinks.map((link) => (
+              <li key={link.label}>
+                <a href={link.href} className="text-sm text-[#6B6B7B] hover:text-[#FF6B35] transition-colors">
+                  {link.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-6 md:px-8 mt-12 pt-8 border-t border-[#E8E4DC] flex flex-col md:flex-row justify-between items-center gap-4">
-        <p className="text-sm text-[#9E9EA8]">© 2025 ContentForge TR. Tüm hakları saklıdır.</p>
-        <p className="text-xs text-[#9E9EA8]">Türkiye&apos;nin e-ticaret satıcıları için yapıldı 🇹🇷</p>
+        <p className="text-sm text-[#9E9EA8]">© 2026 OmniX Engine. Tüm hakları saklıdır.</p>
+        <p className="text-xs text-[#9E9EA8]">Global e-ticaret satıcıları için yapıldı 🌍</p>
       </div>
     </footer>
   )

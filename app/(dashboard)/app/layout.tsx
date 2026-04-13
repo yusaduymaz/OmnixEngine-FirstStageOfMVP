@@ -70,7 +70,7 @@ function Sidebar() {
             className="text-xl font-bold text-slate-900 tracking-tight"
             style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}
           >
-            ContentForge
+            Omnix Engine
           </h1>
           <p className="text-[10px] text-orange-600 font-bold uppercase tracking-widest">
             AI Destekli Yönetim
@@ -87,8 +87,8 @@ function Sidebar() {
               key={href}
               href={href}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${isActive
-                  ? 'text-orange-600 font-bold bg-orange-50 border-r-4 border-orange-600 rounded-r-none'
-                  : 'text-slate-500 hover:text-slate-900 hover:bg-orange-50'
+                ? 'text-orange-600 font-bold bg-orange-50 border-r-4 border-orange-600 rounded-r-none'
+                : 'text-slate-500 hover:text-slate-900 hover:bg-orange-50'
                 }`}
             >
               <Icon />

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Dashboard — ContentForge TR',
+  title: 'Dashboard — Omnix Engine',
 }
 
 // ── Tip Tanımları ────────────────────────────────────────────────────────────
@@ -276,11 +276,10 @@ export default async function DashboardPage() {
                         <td className="py-4 px-4 font-semibold text-slate-800 max-w-[200px] truncate">{gen.product_name}</td>
                         <td className="py-4 px-4 text-slate-500 italic">{relativeDate(gen.created_at)}</td>
                         <td className="py-4 px-4">
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${
-                            gen.status === 'completed' ? 'bg-green-50 text-green-700'
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${gen.status === 'completed' ? 'bg-green-50 text-green-700'
                             : gen.status === 'failed' ? 'bg-red-50 text-red-700'
-                            : 'bg-amber-50 text-amber-700'
-                          }`}>
+                              : 'bg-amber-50 text-amber-700'
+                            }`}>
                             {gen.status === 'completed' ? 'Tamamlandı' : gen.status === 'failed' ? 'Başarısız' : 'Bekliyor'}
                           </span>
                         </td>

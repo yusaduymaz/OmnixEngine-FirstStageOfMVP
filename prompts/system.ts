@@ -51,6 +51,8 @@ export type PlatformId =
   | 'amazon_it' | 'ebay_it'
   // ES
   | 'amazon_es' | 'aliexpress_es'
+  // Altyapı
+  | 'shopify' | 'woocommerce' | 'wix'
 
 /** Ülkelere göre platform eşleştirmesi */
 export const COUNTRY_PLATFORMS_MAPPING: Record<string, PlatformId[]> = {
@@ -61,6 +63,7 @@ export const COUNTRY_PLATFORMS_MAPPING: Record<string, PlatformId[]> = {
   FR: ['amazon_fr', 'cdiscount'],
   IT: ['amazon_it', 'ebay_it'],
   ES: ['amazon_es', 'aliexpress_es'],
+  GLOBAL: ['shopify', 'woocommerce', 'wix'],
 }
 
 /** İçerik tonu türleri */
@@ -77,7 +80,7 @@ export interface SystemPromptParams {
   /** Çıktı dili */
   language?: 'tr' | 'en'
   /** Hedef pazar ülke kodu */
-  country?: 'TR' | 'US' | 'UK' | 'DE' | 'FR' | 'IT' | 'ES'
+  country?: 'TR' | 'US' | 'UK' | 'DE' | 'FR' | 'IT' | 'ES' | 'GLOBAL'
   /** Hedef platform ID listesi */
   platforms: PlatformId[]
   /** Yazı tonu */
@@ -99,7 +102,7 @@ export interface UserMessageParams {
   /** Çıktı dili */
   language?: 'tr' | 'en'
   /** Hedef pazar ülke kodu */
-  country?: 'TR' | 'US' | 'UK' | 'DE' | 'FR' | 'IT' | 'ES'
+  country?: 'TR' | 'US' | 'UK' | 'DE' | 'FR' | 'IT' | 'ES' | 'GLOBAL'
   /** Ürün adı (zorunlu) */
   productName: string
   /** Ürün kategorisi */
@@ -158,7 +161,8 @@ export const PLATFORM_TITLE_LIMITS: Record<PlatformId, number> = {
   amazon_de: 200, otto: 100, zalando: 100,
   amazon_fr: 200, cdiscount: 150,
   amazon_it: 200, ebay_it: 80,
-  amazon_es: 200, aliexpress_es: 128
+  amazon_es: 200, aliexpress_es: 128,
+  shopify: 70, woocommerce: 70, wix: 70
 }
 
 /** Platform başlık karakter limitleri (önerilen optimum aralık) */
@@ -177,7 +181,8 @@ export const PLATFORM_TITLE_OPTIMAL: Record<PlatformId, { min: number; max: numb
   amazon_de: { min: 80, max: 150 }, otto: { min: 50, max: 100 }, zalando: { min: 40, max: 80 },
   amazon_fr: { min: 80, max: 150 }, cdiscount: { min: 50, max: 120 },
   amazon_it: { min: 80, max: 150 }, ebay_it: { min: 60, max: 80 },
-  amazon_es: { min: 80, max: 150 }, aliexpress_es: { min: 50, max: 100 }
+  amazon_es: { min: 80, max: 150 }, aliexpress_es: { min: 50, max: 100 },
+  shopify: { min: 50, max: 70 }, woocommerce: { min: 50, max: 70 }, wix: { min: 50, max: 70 }
 }
 
 /** Platform açıklama limitleri */
@@ -196,7 +201,8 @@ export const PLATFORM_DESC_LIMITS: Record<PlatformId, { short: number; long: num
   amazon_de: { short: 200, long: 2000 }, otto: { short: 150, long: 3000 }, zalando: { short: 150, long: 2000 },
   amazon_fr: { short: 200, long: 2000 }, cdiscount: { short: 200, long: 5000 },
   amazon_it: { short: 200, long: 2000 }, ebay_it: { short: 200, long: 4000 },
-  amazon_es: { short: 200, long: 2000 }, aliexpress_es: { short: 200, long: 5000 }
+  amazon_es: { short: 200, long: 2000 }, aliexpress_es: { short: 200, long: 5000 },
+  shopify: { short: 160, long: 5000 }, woocommerce: { short: 160, long: 5000 }, wix: { short: 160, long: 5000 }
 }
 
 /** Platform görünür etiketleri */
@@ -215,7 +221,8 @@ export const PLATFORM_LABELS: Record<PlatformId, string> = {
   amazon_de: 'Amazon DE', otto: 'Otto', zalando: 'Zalando',
   amazon_fr: 'Amazon FR', cdiscount: 'Cdiscount',
   amazon_it: 'Amazon IT', ebay_it: 'eBay IT',
-  amazon_es: 'Amazon ES', aliexpress_es: 'AliExpress ES'
+  amazon_es: 'Amazon ES', aliexpress_es: 'AliExpress ES',
+  shopify: 'Shopify', woocommerce: 'WooCommerce', wix: 'Wix'
 }
 
 /** Platform algoritma ağırlıkları ve kritik kuralları */
@@ -484,6 +491,56 @@ export const PLATFORM_ALGORITHM_RULES: Record<PlatformId, string> = {
   ebay_it: `<platform_rules id="ebay_it">eBay IT kuralları (placeholder)</platform_rules>`,
   amazon_es: `<platform_rules id="amazon_es">Amazon ES kuralları (placeholder)</platform_rules>`,
   aliexpress_es: `<platform_rules id="aliexpress_es">AliExpress ES kuralları (placeholder)</platform_rules>`,
+  shopify: `
+<platform_rules id="shopify">
+  <algorithm_priority>
+    Google SEO ve mağaza içi dönüşüm odaklı:
+    1. Başlıkta H1 standardı (Net, markalı ve okunabilir)
+    2. Meta title ve Meta description optimizasyonu
+    3. Temiz HTML yapısı (H2, H3 kullanımı)
+  </algorithm_priority>
+  <title_rules>
+    - 60-70 karakter (Google SERP uyumlu).
+    - Marka adını ve ana anahtar kelimeyi başa al.
+  </title_rules>
+  <description_rules>
+    - HTML etiketlerini (<h2>, <ul>, <strong>) kullanarak yapılandır.
+    - Uzunluk limiti yok, ancak okunabilirlik için bloklara böl.
+  </description_rules>
+</platform_rules>`,
+  woocommerce: `
+<platform_rules id="woocommerce">
+  <algorithm_priority>
+    Google SEO ve mağaza içi dönüşüm odaklı:
+    1. Başlıkta H1 standardı (Net, anahtar kelime odaklı)
+    2. Meta title ve Meta description optimizasyonu (Yoast/RankMath uyumlu)
+    3. Temiz HTML yapısı ve kısa URL kullanımı
+  </algorithm_priority>
+  <title_rules>
+    - 60-70 karakter (Google SERP uyumlu).
+    - Ürünün ana işlevini ve markayı öne çıkar.
+  </title_rules>
+  <description_rules>
+    - HTML etiketlerini (<h2>, <ul>, <strong>) kullanarak yapılandır.
+    - Kısa açıklama (short description) alanında vurucu, uzun açıklamada detaylı seo uyumlu metin.
+  </description_rules>
+</platform_rules>`,
+  wix: `
+<platform_rules id="wix">
+  <algorithm_priority>
+    Google SEO ve görsel öncelikli mağaza deneyimi odaklı:
+    1. Başlıkta netlik ve H1 standardı
+    2. Meta SEO ayarları (Title & Description)
+    3. Zengin metin (Rich text) editörü ile yapılandırılmış içerik
+  </algorithm_priority>
+  <title_rules>
+    - 60-70 karakter aralığında, kullanıcı niyetine uygun.
+  </title_rules>
+  <description_rules>
+    - HTML etiketlerini kullanarak bölümlendirilmiş zengin metin.
+    - Kullanım faydalarını öne çıkaran net paragraflar.
+  </description_rules>
+</platform_rules>`,
 }
 
 // ════════════════════════════════════════════════════════════════════════════════

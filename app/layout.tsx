@@ -3,9 +3,9 @@ import { ClerkProvider } from '@clerk/nextjs'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'ContentForge TR — Trendyol & Hepsiburada AI İçerik Üreteci',
+  title: 'Omnix Engine — Global Pazaryerleri için AI İçerik Üreteci',
   description:
-    'Trendyol ve Hepsiburada satıcıları için Türkçe SEO odaklı AI içerik üreteci. Ürün başlığı, açıklama ve reklam metninizi saniyeler içinde oluşturun.',
+    'Global pazaryerleri ve e-ticaret altyapıları (Shopify, Amazon, Etsy) için çok kanallı AI motoru. Saniyeler içinde SEO uyumlu metinler yazın, stüdyo kalitesinde ürün görselleri üretin ve listelemelerinizi analiz edin.',
 }
 
 export default function RootLayout({
