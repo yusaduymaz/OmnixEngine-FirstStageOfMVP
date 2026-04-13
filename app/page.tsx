@@ -211,28 +211,18 @@ function FeaturesSection() {
         </svg>
       ),
       iconBg: 'bg-orange-50',
-      title: 'Akıllı Başlık Üretimi',
-      desc: 'Trendyol ve Hepsiburada\'nın karakter limitlerine ve arama algoritmalarına özel, tıklama odaklı ürün başlıkları. Platform kuralları otomatik uygulanır.',
+      title: 'AI İçerik Üretici',
+      desc: 'Sıfırdan platform uyumlu SEO içerik üretimi. 30+ platformun karakter limitleri, başlık kuralları ve algoritma gereksinimleri otomatik uygulanır.',
     },
     {
       icon: (
         <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
         </svg>
       ),
       iconBg: 'bg-blue-50',
-      title: 'SEO Uyumlu Açıklamalar',
-      desc: 'Türkçe arama davranışına göre optimize, anahtar kelimeleri doğal yerleştiren, hem Türk tüketiciye hem platfom robotuna hitap eden içerikler.',
-    },
-    {
-      icon: (
-        <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
-        </svg>
-      ),
-      iconBg: 'bg-purple-50',
-      title: 'Meta & Google Reklam Metni',
-      desc: 'Sosyal medya reklamlarınız için yüksek dönüşüm sağlayan, yaratıcı ve dikkat çekici kreatif metin alternatifleri. 40 + 125 karakter formatı hazır.',
+      title: 'İçerik Dönüştürücü',
+      desc: 'Bir platformdaki ürün URL\'sini yapıştırın, hedef platform seçin. AI içeriği çekip hedef formata yeniden yazar. Orijinal ↔ dönüşmüş karşılaştırma anında.',
     },
     {
       icon: (
@@ -241,28 +231,59 @@ function FeaturesSection() {
         </svg>
       ),
       iconBg: 'bg-green-50',
+      title: 'İçerik Analizörü',
+      desc: 'Canlıdaki listelemenizin SEO denetimini yapın. 0–100 arası genel skor, 5 kriter bazlı rapor ve "AI ile Düzelt" butonuyla tek tıkla iyileştirme.',
+    },
+    {
+      icon: (
+        <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      ),
+      iconBg: 'bg-purple-50',
+      title: 'Görsel Stüdyo',
+      desc: 'Ham ürün fotoğrafını yükleyin, AI arka planı kaldırsın. Beyaz/gradient stüdyo arka planı, gölge efektleri ve platform preset boyutları.',
+    },
+    {
+      icon: (
+        <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      iconBg: 'bg-emerald-50',
       title: 'Anlık SEO Skoru',
-      desc: '0–100 arası animasyonlu skor, kullanılan anahtar kelimeler ve karakter sayacı. Her üretimde ne kadar güçlü olduğunu görün.',
+      desc: 'Her üretimde 0–100 arası animasyonlu SEO skoru. Kullanılan anahtar kelimeler, karakter sayacı ve platform uyumluluk değerlendirmesi.',
+    },
+    {
+      icon: (
+        <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      iconBg: 'bg-indigo-50',
+      title: 'Omnichannel Destek',
+      desc: 'Tek içerikten tüm platformlara. Trendyol başlığı + Amazon bullet points + Shopify meta — aynı anda, farklı formatlarda çıktı alın.',
+    },
+    {
+      icon: (
+        <svg className="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+      ),
+      iconBg: 'bg-slate-50',
+      title: 'Güvenlik & KVKK',
+      desc: 'Row-Level Security izolasyonu, prompt injection koruması ve KVKK uyumlu veri saklama. Verileriniz her zaman güvende.',
     },
     {
       icon: (
         <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
       ),
       iconBg: 'bg-amber-50',
-      title: '4 Farklı Yazı Tonu',
-      desc: 'Profesyonel, samimi, lüks veya kampanya tonu. Her ürün ve marka kimliği için uygun ses tonu ile içerik üretin.',
-    },
-    {
-      icon: (
-        <svg className="w-6 h-6 text-[#1A1A2E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-        </svg>
-      ),
-      iconBg: 'bg-slate-50',
-      title: 'İçerik Kütüphanesi',
-      desc: 'Tüm üretimleriniz kaydedilir. Geçmiş içerikleri filtreleyip, kopyalayıp yeniden kullanın. Üretim geçmişiniz her zaman elinizin altında.',
+      title: 'Toplu İşlem & API',
+      desc: 'CSV ile yüzlerce ürünü toplu yükleyin, REST API ile kendi sistemlerinize entegre edin. Growth ve üzeri planlarda kullanılabilir.',
     },
   ]
 
@@ -275,14 +296,14 @@ function FeaturesSection() {
             className="text-4xl font-bold text-[#1A1A2E] tracking-tight mb-4"
             style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}
           >
-            Akıllı İçerik Üretim Motoru
+            OmniX Engine ile Neler Yapabilirsiniz?
           </h2>
           <p className="text-[#6B6B7B] text-lg leading-relaxed">
-            Her kanal için özelleştirilmiş, algoritmalara uyumlu ve ikna edici Türkçe metinler.
+            İçerik üretin, dönüştürün, analiz edin ve görsellerinizi profesyonel seviyeye taşıyın — tek bir platformtan, 30+ kanala.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
           {features.map((f, i) => (
             <div
               key={i}
@@ -292,7 +313,7 @@ function FeaturesSection() {
                 {f.icon}
               </div>
               <h3
-                className="text-lg font-bold text-[#1A1A2E] mb-2"
+                className="text-base font-bold text-[#1A1A2E] mb-2"
                 style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}
               >
                 {f.title}
@@ -300,6 +321,165 @@ function FeaturesSection() {
               <p className="text-sm text-[#6B6B7B] leading-relaxed">{f.desc}</p>
             </div>
           ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function ImageStudioSection() {
+  const steps = [
+    {
+      n: '1',
+      title: 'Fotoğrafı Yükle',
+      desc: 'Ham ürün görselinizi sürükle-bırak ile yükleyin. JPG, PNG, WebP formatları desteklenir.',
+    },
+    {
+      n: '2',
+      title: 'Stüdyo Ayarını Seç',
+      desc: 'Beyaz arka plan, gölgelendirme veya gradient seçin. Platform presetleri (1080×1080, 1500×1500) hazır.',
+    },
+    {
+      n: '3',
+      title: 'AI İşlesin',
+      desc: 'Arka plan kaldırma, ışık düzeltme ve profesyonel render otomatik uygulanır. Saniyeler içinde hazır.',
+    },
+  ]
+
+  return (
+    <section className="py-24 bg-white">
+      <div className="max-w-7xl mx-auto px-6 md:px-8">
+        <div className="flex flex-col lg:flex-row gap-16 items-center">
+          {/* Sol — adımlar */}
+          <div className="lg:w-1/2 space-y-10">
+            <div>
+              <p className="text-xs font-bold text-purple-600 uppercase tracking-widest mb-3">Görsel Stüdyo</p>
+              <h2
+                className="text-4xl font-bold text-[#1A1A2E] tracking-tight mb-4"
+                style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}
+              >
+                Ham Fotoğraftan Profesyonel Görsele
+              </h2>
+              <p className="text-[#6B6B7B] text-lg">
+                AI destekli görsel stüdyo ile ürün fotoğraflarınızı stüdyo kalitesine yükseltin.
+              </p>
+            </div>
+
+            <div className="space-y-8">
+              {steps.map((step, i) => (
+                <div key={i} className="flex gap-5">
+                  <div className="shrink-0 w-12 h-12 rounded-xl bg-purple-600 text-white flex items-center justify-center font-bold text-lg shadow-sm shadow-purple-600/30">
+                    {step.n}
+                  </div>
+                  <div>
+                    <h4
+                      className="text-lg font-bold text-[#1A1A2E] mb-1"
+                      style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}
+                    >
+                      {step.title}
+                    </h4>
+                    <p className="text-[#6B6B7B] text-sm leading-relaxed">{step.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-2 text-purple-600 font-bold text-sm hover:gap-3 transition-all"
+            >
+              Görsel Stüdyo&apos;yu deneyin — ücretsiz
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Link>
+          </div>
+
+          {/* Sağ — Before/After mockup kart */}
+          <div className="lg:w-1/2 relative">
+            <div className="absolute -top-8 -left-8 w-56 h-56 bg-purple-600/8 rounded-full blur-3xl" />
+            <div className="absolute -bottom-8 -right-8 w-56 h-56 bg-[#FF6B35]/5 rounded-full blur-3xl" />
+
+            <div className="relative bg-white rounded-3xl border border-[#E8E4DC] shadow-xl p-6 space-y-4">
+              {/* Başlık */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-red-400" />
+                  <div className="w-2 h-2 rounded-full bg-amber-400" />
+                  <div className="w-2 h-2 rounded-full bg-green-400" />
+                </div>
+                <div className="text-xs text-purple-600 font-semibold bg-purple-50 px-3 py-1 rounded-full">
+                  📸 Görsel Stüdyo
+                </div>
+              </div>
+
+              {/* Before / After karşılaştırma */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Öncesi */}
+                <div className="relative rounded-xl overflow-hidden border border-[#E8E4DC]">
+                  <div className="aspect-square bg-gradient-to-br from-[#d4c8b8] via-[#c9bda9] to-[#b8a994] flex items-center justify-center relative">
+                    {/* Dağınık arka plan simülasyonu */}
+                    <div className="absolute top-3 left-3 w-8 h-5 bg-[#a89880]/40 rounded-sm rotate-12" />
+                    <div className="absolute bottom-6 right-4 w-10 h-3 bg-[#a89880]/30 rounded-sm -rotate-6" />
+                    <div className="absolute top-1/4 right-1/4 w-4 h-4 bg-[#a89880]/20 rounded-full" />
+                    {/* Ürün placeholder */}
+                    <div className="w-24 h-28 bg-white/90 rounded-lg shadow-sm flex flex-col items-center justify-center">
+                      <div className="w-14 h-16 bg-[#FF6B35]/15 rounded-md mb-1" />
+                      <div className="w-10 h-1 bg-[#E8E4DC] rounded-full" />
+                    </div>
+                  </div>
+                  <div className="absolute bottom-0 inset-x-0 bg-red-500/90 text-white text-[10px] font-bold text-center py-1">
+                    ÖNCESİ
+                  </div>
+                </div>
+
+                {/* Sonrası */}
+                <div className="relative rounded-xl overflow-hidden border border-purple-200">
+                  <div className="aspect-square bg-white flex items-center justify-center relative">
+                    {/* Temiz stüdyo arka plan */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-white via-[#fafafa] to-[#f0f0f0]" />
+                    {/* Ürün placeholder — gölgeli */}
+                    <div className="relative w-24 h-28 bg-white rounded-lg shadow-lg flex flex-col items-center justify-center border border-[#f0f0f0]">
+                      <div className="w-14 h-16 bg-[#FF6B35]/20 rounded-md mb-1" />
+                      <div className="w-10 h-1 bg-[#E8E4DC] rounded-full" />
+                    </div>
+                    {/* Yansıma efekti */}
+                    <div className="absolute bottom-2 w-20 h-3 bg-black/5 rounded-full blur-sm" />
+                  </div>
+                  <div className="absolute bottom-0 inset-x-0 bg-green-500/90 text-white text-[10px] font-bold text-center py-1">
+                    SONRASI
+                  </div>
+                </div>
+              </div>
+
+              {/* Slider göstergesi */}
+              <div className="flex items-center justify-center gap-3">
+                <div className="h-0.5 flex-1 bg-red-200 rounded-full" />
+                <div className="w-8 h-8 rounded-full bg-[#1A1A2E] flex items-center justify-center shadow-md">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+                  </svg>
+                </div>
+                <div className="h-0.5 flex-1 bg-green-200 rounded-full" />
+              </div>
+
+              {/* İşlem badge'leri */}
+              <div className="flex flex-wrap gap-2">
+                <span className="text-[10px] px-2.5 py-1 rounded-full bg-green-50 text-green-700 font-semibold border border-green-200">
+                  ✓ Arka Plan Kaldırıldı
+                </span>
+                <span className="text-[10px] px-2.5 py-1 rounded-full bg-purple-50 text-purple-700 font-semibold border border-purple-200">
+                  ✓ Stüdyo Işığı Eklendi
+                </span>
+                <span className="text-[10px] px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 font-semibold border border-blue-200">
+                  📐 1080×1080 px
+                </span>
+              </div>
+
+              {/* Alt bilgi */}
+              <p className="text-center text-[11px] text-[#9E9EA8]">⚡ 3.1 saniyede işlendi — fal.ai tarafından</p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -428,24 +608,178 @@ function HowItWorksSection() {
 }
 
 function MarketplaceSection() {
-  const platforms = ['trendyol', 'hepsiburada', 'amazon', 'shopify']
+  const categories = [
+    {
+      flag: '🇹🇷',
+      label: 'Yerli Pazaryerleri',
+      platforms: ['Trendyol', 'Hepsiburada', 'N11', 'Çiçeksepeti'],
+    },
+    {
+      flag: '🌍',
+      label: 'Global Pazaryerleri',
+      platforms: ['Amazon', 'Etsy', 'eBay', 'Allegro', 'Bol.com'],
+    },
+    {
+      flag: '⚙️',
+      label: 'E-ticaret Altyapıları',
+      platforms: ['Shopify', 'WooCommerce', 'Magento', 'Wix'],
+    },
+  ]
 
   return (
-    <section id="entegrasyon" className="py-20 bg-white border-y border-[#E8E4DC]">
-      <div className="max-w-7xl mx-auto px-6 md:px-8 text-center">
-        <p className="text-xs font-bold text-[#9E9EA8] uppercase tracking-[0.2em] mb-10">
-          Tam Entegre Ekosistem
-        </p>
-        <div className="flex flex-wrap justify-center items-center gap-12 md:gap-16">
-          {platforms.map((p) => (
-            <div
-              key={p}
-              className="text-2xl md:text-3xl font-black text-[#9E9EA8] tracking-tighter opacity-50 hover:opacity-100 hover:text-[#1A1A2E] transition-all duration-300 cursor-default"
-              style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}
-            >
-              {p}
+    <section id="entegrasyon" className="py-24 bg-white border-y border-[#E8E4DC]">
+      <div className="max-w-7xl mx-auto px-6 md:px-8">
+        <div className="flex flex-col lg:flex-row gap-16 items-center">
+          {/* Sol — kategori listesi */}
+          <div className="lg:w-1/2">
+            <div className="mb-10">
+              <p className="text-xs font-bold text-[#9E9EA8] uppercase tracking-[0.2em] mb-3">
+                Tam Entegre Ekosistem
+              </p>
+              <h2
+                className="text-3xl md:text-4xl font-bold text-[#1A1A2E] tracking-tight mb-3"
+                style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}
+              >
+                30+ Platform, Tek Motor
+              </h2>
+              <p className="text-[#6B6B7B] text-base">Yerelden globale, her platformun algoritma kuralları motorumuza gömülü.</p>
             </div>
-          ))}
+
+            <div className="space-y-8">
+              {categories.map((cat) => (
+                <div key={cat.label}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-lg">{cat.flag}</span>
+                    <p className="text-sm font-bold text-[#1A1A2E] uppercase tracking-widest">{cat.label}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2.5">
+                    {cat.platforms.map((p) => (
+                      <div
+                        key={p}
+                        className="bg-[#F8F7F4] hover:bg-white border border-[#E8E4DC] rounded-xl px-5 py-2.5 text-sm font-bold text-[#1A1A2E] hover:text-[#FF6B35] hover:border-[#FF6B35]/30 hover:shadow-sm transition-all duration-200 cursor-default"
+                        style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}
+                      >
+                        {p}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-8">
+              <Link
+                href="/entegrasyonlar"
+                className="inline-flex items-center gap-2 text-[#FF6B35] font-bold text-sm hover:gap-3 transition-all"
+              >
+                ve 20+ platform daha — tümünü gör
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </Link>
+            </div>
+          </div>
+
+          {/* Sağ — platform akışı mockup kartı */}
+          <div className="lg:w-1/2 relative">
+            <div className="absolute -top-8 -right-8 w-56 h-56 bg-[#FF6B35]/8 rounded-full blur-3xl" />
+            <div className="absolute -bottom-8 -left-8 w-56 h-56 bg-[#1A1A2E]/5 rounded-full blur-3xl" />
+
+            <div className="relative bg-white rounded-3xl border border-[#E8E4DC] shadow-xl p-6 space-y-5">
+              {/* Kart başlık */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-red-400" />
+                  <div className="w-2 h-2 rounded-full bg-amber-400" />
+                  <div className="w-2 h-2 rounded-full bg-green-400" />
+                </div>
+                <div className="text-xs text-[#9E9EA8] font-mono bg-[#F8F7F4] px-3 py-1 rounded-full">
+                  🔄 İçerik Dönüşümü
+                </div>
+              </div>
+
+              {/* Kaynak → Hedef akışı */}
+              <div className="bg-[#F8F7F4] rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                  {/* Kaynak */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-[#FF6B35] flex items-center justify-center text-white text-xs font-bold">TR</div>
+                    <div>
+                      <p className="text-[10px] text-[#9E9EA8]">Kaynak</p>
+                      <p className="text-sm font-bold text-[#1A1A2E]">Trendyol</p>
+                    </div>
+                  </div>
+                  {/* Ok */}
+                  <div className="flex items-center gap-1.5 px-3">
+                    <div className="w-6 h-[2px] bg-[#FF6B35] rounded-full" />
+                    <svg className="w-4 h-4 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </div>
+                  {/* Hedef */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-[#1A1A2E] flex items-center justify-center text-white text-xs font-bold">US</div>
+                    <div>
+                      <p className="text-[10px] text-[#9E9EA8]">Hedef</p>
+                      <p className="text-sm font-bold text-[#1A1A2E]">Amazon US</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Platform grid — bağlı durumda */}
+              <div>
+                <p className="text-xs font-semibold text-[#6B6B7B] mb-3">Bağlı Platformlar</p>
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { name: 'Trendyol', color: 'bg-[#FF6B35]', active: true },
+                    { name: 'HB', color: 'bg-purple-600', active: true },
+                    { name: 'Amazon', color: 'bg-[#1A1A2E]', active: true },
+                    { name: 'Shopify', color: 'bg-green-600', active: true },
+                    { name: 'Etsy', color: 'bg-amber-600', active: true },
+                    { name: 'N11', color: 'bg-red-500', active: true },
+                    { name: 'eBay', color: 'bg-blue-600', active: false },
+                    { name: '+20', color: 'bg-[#E8E4DC]', active: false },
+                  ].map((p) => (
+                    <div
+                      key={p.name}
+                      className={`rounded-lg py-2 text-center text-[10px] font-bold transition-all ${
+                        p.active
+                          ? `${p.color} text-white shadow-sm`
+                          : 'bg-[#F8F7F4] text-[#9E9EA8] border border-dashed border-[#E8E4DC]'
+                      }`}
+                    >
+                      {p.name}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Durum göstergeleri */}
+              <div className="space-y-2.5">
+                {[
+                  { label: 'Başlık kuralları', status: 'Uyumlu', color: 'text-green-600 bg-green-50' },
+                  { label: 'SEO gereksinimleri', status: 'Uyumlu', color: 'text-green-600 bg-green-50' },
+                  { label: 'Karakter limiti', status: '67/80', color: 'text-blue-600 bg-blue-50' },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center justify-between">
+                    <span className="text-xs text-[#6B6B7B]">{item.label}</span>
+                    <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${item.color}`}>
+                      ✓ {item.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Alt bilgi */}
+              <div className="flex items-center justify-center gap-2 bg-[#FF6B35]/5 border border-[#FF6B35]/15 rounded-xl py-2.5">
+                <svg className="w-4 h-4 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-xs font-bold text-[#FF6B35]">Tek içerik → tüm platformlara</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -699,6 +1033,7 @@ export default function LandingPage() {
       <NavBar />
       <HeroSection />
       <FeaturesSection />
+      <ImageStudioSection />
       <HowItWorksSection />
       <MarketplaceSection />
       <PricingSection />
