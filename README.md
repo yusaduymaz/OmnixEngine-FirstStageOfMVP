@@ -17,6 +17,34 @@ OmniX Engine 4 temel modülden oluşmaktadır:
 3. **🔍 İçerik Analizörü (Analyzer):** Mevcut içerikleri hedef platformun kurallarına (SEO skorları, kelime limitleri, yasal uyumluluk vb.) göre analiz edip detaylı bir denetim (audit) raporu ve iyileştirme önerileri sunar.
 4. **📸 Akıllı Görsel Stüdyosu (Image Studio):** Ham ürün fotoğraflarının arka planını yapay zeka ile temizleyip profesyonel e-ticaret standartlarına (doğru ışık, gölge, platformun istediği spesifik boyutlar) uygun yepyeni görseller üretir.
 
+## 📷 Ekran Görüntüleri
+
+*(Buraya projenin önemli ekranlarının görsellerini ekleyebilirsiniz. Örneğin: Login Ekranı, Rol Yönetimi Sayfası, AI Analiz Sonucu vb.)*
+
+<details>
+<summary>📸 Ekran Görüntülerini Görüntüle</summary>
+<br>
+
+![image](/image/1.png)
+![image](/image/2.png)
+![image](/image/3.png)
+![image](/image/4.png)
+![image](/image/5.png)
+![image](/image/6.png)
+![image](/image/7.png)
+![image](/image/8.png)
+![image](/image/9.png)
+![image](/image/10.png)
+![image](/image/11.png)
+![image](/image/12.png)
+![image](/image/13.png)
+![image](/image/14.png)
+![image](/image/15.png)
+
+
+
+</details>
+
 ## 🛠️ Tech Stack (Kullanılan Teknolojiler)
 
 Proje, modern ve ölçeklenebilir B2B SaaS mimarisine uygun olarak geliştirilmiştir.
