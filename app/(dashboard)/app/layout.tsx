@@ -43,11 +43,32 @@ const IconLogout = () => (
   </svg>
 )
 
+const IconSearch = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+  </svg>
+)
+
+const IconRefresh = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+  </svg>
+)
+
+const IconImage = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+  </svg>
+)
+
 // ── Nav Linkleri ────────────────────────────────────────────────────────────
 
 const NAV_ITEMS = [
   { href: '/app', label: 'Panel', icon: IconDashboard, exact: true },
   { href: '/app/generate', label: 'İçerik Üretici', icon: IconSparkles, exact: false },
+  { href: '/app/analyzer', label: 'Analizör', icon: IconSearch, exact: false },
+  { href: '/app/converter', label: 'Dönüştürücü', icon: IconRefresh, exact: false },
+  { href: '/app/image-studio', label: 'Görsel Stüdyosu', icon: IconImage, exact: false },
   { href: '/app/library', label: 'Kütüphane', icon: IconLibrary, exact: false },
   { href: '/app/settings/profile', label: 'Ayarlar', icon: IconSettings, exact: false },
 ]

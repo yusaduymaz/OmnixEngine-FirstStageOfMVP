@@ -1,6 +1,7 @@
 // OmniX Engine — Trigger.dev İstemcisi
 // Toplu üretim, görsel pipeline ve zamanlanmış görevler
 
+// @ts-ignore - TS2305: Module has no exported member 'TriggerClient' in SDK v4
 import { TriggerClient } from '@trigger.dev/sdk'
 
 // ═══════════════════════════════════════════════════════

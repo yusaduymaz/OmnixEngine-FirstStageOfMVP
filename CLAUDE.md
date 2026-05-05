@@ -109,11 +109,21 @@ contentforge-tr/
 │   │   ├── tools/
 │   │   ├── prompts/
 │   │   └── types/
-│   └── inventory/
-│       ├── skills/                  # forecast, reorder, anomaly, seasonal
-│       ├── tools/
-│       ├── prompts/
-│       └── types/
+│   ├── inventory/
+│   │   ├── skills/                  # forecast, reorder, anomaly, seasonal
+│   │   ├── tools/
+│   │   ├── prompts/
+│   │   └── types/
+│   ├── pm/                          # Project Manager Agent
+│   │   └── prompts/system.ts
+│   ├── frontend/                    # Frontend Agent
+│   │   └── prompts/system.ts
+│   ├── backend/                     # Backend Agent
+│   │   └── prompts/system.ts
+│   ├── qa/                          # Quality Assurance Agent
+│   │   └── prompts/system.ts
+│   └── security/                    # Security Agent
+│       └── prompts/system.ts
 │
 ├── orchestrator/                    # Merkezi yönetici
 │   ├── router.ts                    # Agent seçim mantığı
@@ -182,9 +192,9 @@ contentforge-tr/
 
 | Sprint | Kapsam | Durum |
 |--------|--------|-------|
-| 1-2 | Content Agent (Analyzer + Converter) | ✅ %30 |
-| 3 | Image Agent (Image Studio) | 🔄 Devam |
-| 4 | Pricing Agent | 📋 Plan |
+| 1-2 | Content Agent (Analyzer + Converter) | ✅ Tamamlandı |
+| 3 | Image Agent (Image Studio) | ✅ Tamamlandı |
+| 4 | Pricing Agent | 🔄 Sıradaki |
 | 5 | Inventory Agent | 📋 Plan |
 | 6 | Orchestrator + Full Audit | 📋 Plan |
 
@@ -207,3 +217,4 @@ contentforge-tr/
 - Tasarım sistemi, kullanıcı akışları, ekranlar: @design.md
 - Teknik mimari, DB şeması, API tasarımı: @architecture.md
 - Prompt mühendisliği referansı: @promptengineering.md
+

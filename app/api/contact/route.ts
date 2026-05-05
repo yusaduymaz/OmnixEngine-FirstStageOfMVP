@@ -7,7 +7,7 @@ const contactSchema = z.object({
   name: z.string().min(2, 'Ad en az 2 karakter olmalı.').max(100),
   email: z.string().email('Geçerli bir e-posta adresi girin.'),
   subject: z.enum(['genel', 'teknik', 'enterprise', 'ortaklik', 'geri-bildirim'], {
-    errorMap: () => ({ message: 'Lütfen bir konu seçin.' }),
+    message: 'Lütfen bir konu seçin.',
   }),
   message: z.string().min(10, 'Mesaj en az 10 karakter olmalı.').max(5000),
 })
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     // Zod validasyon
     const result = contactSchema.safeParse(body)
     if (!result.success) {
-      const firstError = result.error.errors[0]?.message || 'Geçersiz form verisi.'
+      const firstError = result.error.issues[0]?.message || 'Geçersiz form verisi.'
       return NextResponse.json({ error: firstError }, { status: 400 })
     }
 

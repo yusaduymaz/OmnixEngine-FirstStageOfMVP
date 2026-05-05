@@ -39,6 +39,7 @@ export type PlatformId =
   | 'pazarama'
   | 'dolap'
   | 'gittigidiyor'
+  | 'etsy'
   // US
   | 'amazon_us' | 'ebay_us' | 'walmart'
   // UK
@@ -56,7 +57,7 @@ export type PlatformId =
 
 /** Ülkelere göre platform eşleştirmesi */
 export const COUNTRY_PLATFORMS_MAPPING: Record<string, PlatformId[]> = {
-  TR: ['trendyol', 'hepsiburada', 'amazon_tr', 'n11', 'ciceksepeti', 'pttavm', 'pazarama', 'dolap', 'gittigidiyor'],
+  TR: ['trendyol', 'hepsiburada', 'amazon_tr', 'n11', 'ciceksepeti', 'pttavm', 'pazarama', 'dolap', 'gittigidiyor', 'etsy'],
   US: ['amazon_us', 'ebay_us', 'walmart'],
   UK: ['amazon_uk', 'etsy_uk'],
   DE: ['amazon_de', 'otto', 'zalando'],
@@ -162,7 +163,8 @@ export const PLATFORM_TITLE_LIMITS: Record<PlatformId, number> = {
   amazon_fr: 200, cdiscount: 150,
   amazon_it: 200, ebay_it: 80,
   amazon_es: 200, aliexpress_es: 128,
-  shopify: 70, woocommerce: 70, wix: 70
+  shopify: 70, woocommerce: 70, wix: 70,
+  etsy: 140
 }
 
 /** Platform başlık karakter limitleri (önerilen optimum aralık) */
@@ -182,7 +184,8 @@ export const PLATFORM_TITLE_OPTIMAL: Record<PlatformId, { min: number; max: numb
   amazon_fr: { min: 80, max: 150 }, cdiscount: { min: 50, max: 120 },
   amazon_it: { min: 80, max: 150 }, ebay_it: { min: 60, max: 80 },
   amazon_es: { min: 80, max: 150 }, aliexpress_es: { min: 50, max: 100 },
-  shopify: { min: 50, max: 70 }, woocommerce: { min: 50, max: 70 }, wix: { min: 50, max: 70 }
+  shopify: { min: 50, max: 70 }, woocommerce: { min: 50, max: 70 }, wix: { min: 50, max: 70 },
+  etsy: { min: 40, max: 100 }
 }
 
 /** Platform açıklama limitleri */
@@ -202,7 +205,8 @@ export const PLATFORM_DESC_LIMITS: Record<PlatformId, { short: number; long: num
   amazon_fr: { short: 200, long: 2000 }, cdiscount: { short: 200, long: 5000 },
   amazon_it: { short: 200, long: 2000 }, ebay_it: { short: 200, long: 4000 },
   amazon_es: { short: 200, long: 2000 }, aliexpress_es: { short: 200, long: 5000 },
-  shopify: { short: 160, long: 5000 }, woocommerce: { short: 160, long: 5000 }, wix: { short: 160, long: 5000 }
+  shopify: { short: 160, long: 5000 }, woocommerce: { short: 160, long: 5000 }, wix: { short: 160, long: 5000 },
+  etsy: { short: 160, long: 5000 }
 }
 
 /** Platform görünür etiketleri */
@@ -222,11 +226,18 @@ export const PLATFORM_LABELS: Record<PlatformId, string> = {
   amazon_fr: 'Amazon FR', cdiscount: 'Cdiscount',
   amazon_it: 'Amazon IT', ebay_it: 'eBay IT',
   amazon_es: 'Amazon ES', aliexpress_es: 'AliExpress ES',
-  shopify: 'Shopify', woocommerce: 'WooCommerce', wix: 'Wix'
+  shopify: 'Shopify', woocommerce: 'WooCommerce', wix: 'Wix',
+  etsy: 'Etsy'
 }
 
 /** Platform algoritma ağırlıkları ve kritik kuralları */
 export const PLATFORM_ALGORITHM_RULES: Record<PlatformId, string> = {
+  etsy: `
+<platform_rules id="etsy">
+  <algorithm_priority>Etsy Search Algorithm</algorithm_priority>
+  <title_rules>Use descriptive, creative titles focusing on handmade or vintage.</title_rules>
+</platform_rules>
+  `,
   trendyol: `
 <platform_rules id="trendyol">
   <algorithm_priority>

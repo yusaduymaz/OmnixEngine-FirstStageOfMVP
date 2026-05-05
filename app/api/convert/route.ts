@@ -1,14 +1,67 @@
-// OmniX Engine — İçerik Dönüştürücü API Route
-// URL/metin girdisi → hedef platformlara dönüştürülmüş içerik (streaming)
+import { auth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { validatePlatformIds, type PlatformId } from '@/prompts/system'
+import { convertSkill, ConvertSkillError } from '@/agents/content/skills/convert.skill'
 
-import { NextResponse } from 'next/server'
+export const maxDuration = 60
+export const dynamic = 'force-dynamic'
 
-// TODO: Sprint 3'te implement edilecek
-// Scraping + Claude rewrite akışı
+const RequestSchema = z.object({
+  sourceUrl: z.string().url('Geçerli bir URL giriniz').optional().or(z.literal('')),
+  sourceText: z.string().optional(),
+  sourcePlatform: z.string().optional(),
+  targetPlatforms: z.array(z.string()).min(1, 'En az bir hedef platform seçmelisiniz'),
+}).refine(data => data.sourceUrl || (data.sourceText && data.sourceText.trim().length > 0), {
+  message: 'Lütfen dönüştürülecek bir URL veya metin girin.',
+  path: ['sourceUrl']
+})
 
-export async function POST() {
-  return NextResponse.json(
-    { error: 'İçerik dönüştürücü henüz aktif değil — Sprint 3\'te tamamlanacak' },
-    { status: 501 }
-  )
+export async function POST(req: NextRequest) {
+  const { userId } = await auth()
+  if (!userId) {
+    return NextResponse.json({ hata: 'Giriş yapmanız gerekiyor.' }, { status: 401 })
+  }
+
+  let body: unknown
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ hata: 'Geçersiz JSON.' }, { status: 400 })
+  }
+
+  const parsed = RequestSchema.safeParse(body)
+  if (!parsed.success) {
+    const errorMsg = parsed.error.issues[0]?.message || 'Geçersiz istek.'
+    return NextResponse.json({ hata: errorMsg }, { status: 400 })
+  }
+
+  const { sourceUrl, sourceText, sourcePlatform, targetPlatforms: rawPlatforms } = parsed.data
+
+  if (!validatePlatformIds(rawPlatforms)) {
+    return NextResponse.json({ hata: 'Geçersiz platform listesi.' }, { status: 400 })
+  }
+  const targetPlatforms = rawPlatforms as PlatformId[]
+
+  try {
+    const result = await convertSkill({
+      userId,
+      sourceUrl: sourceUrl || undefined,
+      sourceText,
+      sourcePlatform,
+      targetPlatforms,
+    })
+
+    return NextResponse.json(result)
+  } catch (err) {
+    if (err instanceof ConvertSkillError) {
+      return NextResponse.json({ hata: err.message }, { status: err.statusCode })
+    }
+
+    console.error('[API/convert] Beklenmeyen hata:', err)
+    return NextResponse.json(
+      { hata: 'Dönüştürme sırasında beklenmeyen bir hata oluştu.' },
+      { status: 500 }
+    )
+  }
 }

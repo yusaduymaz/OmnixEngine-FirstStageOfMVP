@@ -27,7 +27,7 @@ Design ve mimari detaylar için: @c:\Users\duyma\Desktop\contentforge-tr\design.
   - /pricing → Fiyat analizi
   - /inventory → Stok yönetimi
 - app/api → Backend route'ları
-- agents/ → 4 Agent implementasyonu (content, image, pricing, inventory)
+- agents/ → 9 Agent implementasyonu (Ürün: content, image, pricing, inventory | Takım: pm, frontend, backend, qa, security)
 - orchestrator/ → Merkezi yönetici (router, executor, context)
 - lib/ → Servis istemcileri (anthropic, supabase, redis, langfuse, trigger)
 - prompts/ → Sistem prompt dosyaları

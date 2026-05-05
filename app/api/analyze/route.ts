@@ -1,14 +1,60 @@
-// OmniX Engine — İçerik Analizörü API Route
-// URL girdisi → skor + kriter değerlendirmesi + öneriler
+import { auth } from '@clerk/nextjs/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { validatePlatformIds, type PlatformId } from '@/prompts/system'
+import { analyzeSkill, AnalyzeSkillError } from '@/agents/content/skills/analyze.skill'
 
-import { NextResponse } from 'next/server'
+export const maxDuration = 60
+export const dynamic = 'force-dynamic'
 
-// TODO: Sprint 1-2'de implement edilecek
-// Scraping + Claude analiz akışı
+const RequestSchema = z.object({
+  url: z.string().url('Geçerli bir URL giriniz'),
+  platforms: z.array(z.string()).min(1, 'En az bir platform seçmelisiniz'),
+})
 
-export async function POST() {
-  return NextResponse.json(
-    { error: 'İçerik analizörü henüz aktif değil' },
-    { status: 501 }
-  )
+export async function POST(req: NextRequest) {
+  const { userId } = await auth()
+  if (!userId) {
+    return NextResponse.json({ hata: 'Giriş yapmanız gerekiyor.' }, { status: 401 })
+  }
+
+  let body: unknown
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ hata: 'Geçersiz JSON.' }, { status: 400 })
+  }
+
+  const parsed = RequestSchema.safeParse(body)
+  if (!parsed.success) {
+    const errorMsg = parsed.error.issues[0]?.message || 'Geçersiz istek.'
+    return NextResponse.json({ hata: errorMsg }, { status: 400 })
+  }
+
+  const { url, platforms: rawPlatforms } = parsed.data
+
+  if (!validatePlatformIds(rawPlatforms)) {
+    return NextResponse.json({ hata: 'Geçersiz platform listesi.' }, { status: 400 })
+  }
+  const platforms = rawPlatforms as PlatformId[]
+
+  try {
+    const result = await analyzeSkill({
+      userId,
+      url,
+      platforms,
+    })
+
+    return NextResponse.json(result)
+  } catch (err) {
+    if (err instanceof AnalyzeSkillError) {
+      return NextResponse.json({ hata: err.message }, { status: err.statusCode })
+    }
+
+    console.error('[API/analyze] Beklenmeyen hata:', err)
+    return NextResponse.json(
+      { hata: 'Analiz sırasında beklenmeyen bir hata oluştu.' },
+      { status: 500 }
+    )
+  }
 }
