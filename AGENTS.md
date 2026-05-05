@@ -17,15 +17,19 @@ Design ve mimari detaylar için: @c:\Users\duyma\Desktop\contentforge-tr\design.
 - Zod (validasyon), React Hook Form
 
 ## Klasör Yapısı
-- app/(marketing) → Landing page
+- app/(marketing) → Landing page + Hakkımızda + Hizmetler + İletişim
 - app/(auth) → Giriş/kayıt
 - app/(dashboard)/app → Ana uygulama
   - /generate → İçerik üreteci
   - /converter → İçerik dönüştürücü
   - /analyzer → İçerik analizörü
   - /image-studio → Görsel stüdyosu
+  - /pricing → Fiyat analizi
+  - /inventory → Stok yönetimi
 - app/api → Backend route'ları
-- lib/claude → Prompt ve Claude API yardımcıları
+- agents/ → 4 Agent implementasyonu (content, image, pricing, inventory)
+- orchestrator/ → Merkezi yönetici (router, executor, context)
+- lib/ → Servis istemcileri (anthropic, supabase, redis, langfuse, trigger)
 - prompts/ → Sistem prompt dosyaları
 - types/ → TypeScript tip tanımları
 

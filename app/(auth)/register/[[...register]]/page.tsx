@@ -1,8 +1,7 @@
 import { SignUp } from '@clerk/nextjs'
-import { auth } from '@clerk/nextjs/server'
-import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import AuthRedirect from '@/components/auth/AuthRedirect'
 
 export const metadata: Metadata = {
   title: 'Kayıt Ol — ContentForge TR',
@@ -39,12 +38,12 @@ const BENEFITS = [
   },
 ]
 
-export default async function RegisterPage() {
-  const { userId } = await auth()
-  if (userId) redirect('/app')
+export default function RegisterPage() {
 
   return (
     <main className="min-h-screen flex flex-col md:flex-row">
+      {/* Giriş yapmış kullanıcıyı otomatik dashboard'a yönlendir */}
+      <AuthRedirect />
 
       {/* ── SOL: Koyu Marketing Paneli ─────────────────────────────────── */}
       <section className="hidden md:flex w-1/2 relative bg-[#1A1A2E] overflow-hidden items-center justify-center p-12">
@@ -118,6 +117,8 @@ export default async function RegisterPage() {
           <SignUp
             routing="path"
             path="/register"
+            signInUrl="/login"
+            forceRedirectUrl="/app"
             appearance={{
               elements: {
                 formButtonPrimary: 'bg-[#FF6B35] hover:bg-[#e55a2b] text-sm normal-case',

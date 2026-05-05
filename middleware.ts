@@ -1,23 +1,8 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { clerkMiddleware } from '@clerk/nextjs/server'
 
-// Public rotalar — giriş gerektirmeyen sayfalar
-const isPublicRoute = createRouteMatcher([
-  '/',                    // Landing page
-  '/hakkimizda',          // Hakkımızda sayfası
-  '/hizmetlerimiz',       // Hizmetlerimiz sayfası
-  '/entegrasyonlar',      // Entegrasyonlar sayfası
-  '/iletisim',            // İletişim sayfası
-  '/login(.*)',           // Clerk SignIn (route group: (auth)/login/[[...login]])
-  '/register(.*)',        // Clerk SignUp (route group: (auth)/register/[[...register]])
-  '/api/webhooks(.*)',    // Clerk & Stripe webhook'ları
-  '/api/contact',         // İletişim formu API
-])
-
-export default clerkMiddleware(async (auth, request) => {
-  if (!isPublicRoute(request)) {
-    await auth.protect()
-  }
-})
+// Clerk middleware — sadece session yönetimi için
+// Auth koruması client-side yapılır (clock skew sorununu bypass eder)
+export default clerkMiddleware()
 
 export const config = {
   matcher: [

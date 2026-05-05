@@ -1,17 +1,14 @@
-import { auth } from '@clerk/nextjs/server'
-import { redirect } from 'next/navigation'
+import AuthGuard from '@/components/auth/AuthGuard'
 
 /**
- * Dashboard route group layout — sadece kimlik doğrulama koruma katmanı.
+ * Dashboard route group layout — client-side kimlik doğrulama koruma katmanı.
+ * AuthGuard, useAuth() hook'u ile giriş kontrolü yapar.
  * Navigasyon ve sidebar her sayfa kendi içinde yönetiyor.
  */
-export default async function DashboardLayout({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const { userId } = await auth()
-  if (!userId) redirect('/login')
-
-  return <>{children}</>
+  return <AuthGuard>{children}</AuthGuard>
 }

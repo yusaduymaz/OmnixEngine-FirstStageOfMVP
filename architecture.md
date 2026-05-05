@@ -46,6 +46,56 @@
                  └─────────────────────────────────────────────┘
 ```
 
+### 1.1 Orchestrator Detayları
+
+Orchestrator, tüm agentları yöneten merkezi bileşendir:
+- **İstek yönlendirme** — Hangi agent(lar) çalışacak karar verir
+- **Paralel execution** — Birden fazla agent aynı anda (`Promise.allSettled`)
+- **Context paylaşımı** — Agentlar arası veri transferi
+- **Zod ile input/output validasyonu**
+- **Rate limiting** (Redis)
+- **Langfuse ile izleme**
+
+#### Dosya Yapısı
+```
+src/orchestrator/
+├── router.ts        # Hangi agent(lar) çalışacak karar verir
+├── executor.ts      # Promise.all ile paralel çalıştırma
+├── context.ts       # SharedContext tip ve yönetimi
+└── types.ts         # OrchestratorRequest/Response tipleri
+```
+
+#### router.ts — Agent Seçim Mantığı
+```typescript
+type AgentRoute = {
+  agent: 'content' | 'image' | 'pricing' | 'inventory'
+  skills: string[]
+  priority: 'high' | 'normal' | 'low'
+}
+
+// Full Product Audit → tüm agentlar paralel
+function routeRequest(req: OrchestratorRequest): AgentRoute[] {
+  if (req.type === 'full_audit') {
+    return [
+      { agent: 'content',   skills: ['analyze', 'generate'], priority: 'high' },
+      { agent: 'image',     skills: ['bg-remove', 'optimize'], priority: 'high' },
+      { agent: 'pricing',   skills: ['competitor', 'price-rec'], priority: 'high' },
+      { agent: 'inventory', skills: ['forecast', 'anomaly'], priority: 'normal' },
+    ]
+  }
+}
+```
+
+#### executor.ts — Paralel Çalıştırma
+```typescript
+async function executeParallel(routes: AgentRoute[], context: SharedContext) {
+  const results = await Promise.allSettled(
+    routes.map(route => executeAgent(route, context))
+  )
+  return mergeResults(results)
+}
+```
+
 ---
 
 ## 2. Tech Stack Kararları
@@ -87,6 +137,24 @@
 | Stüdyo Render | **Replicate** (`stability-ai/stable-diffusion-img2img`) | Arka plan oluşturma, gölge/ışık ekleme |
 | Görsel Optimizasyon | **sharp** (Node.js) | Resize, format dönüşümü (WebP), sıkıştırma |
 | Fallback | fal.ai down ise → **Replicate** background removal modeli | Yedeklilik |
+
+#### bg-remove Akışı
+```
+Input: File/URL
+  → fal.ai birefnet model
+  → Şeffaf PNG çıktı
+  → Supabase Storage'a kaydet
+  → URL döndür
+```
+
+#### studio-render Akışı
+```
+Input: Ürün görseli (şeffaf) + sahne stili
+  → Style prompt oluştur (Claude haiku)
+  → Replicate SDXL/Flux model
+  → Render çıktı
+  → Optimize et → Supabase kaydet
+```
 
 ### 2.5 Web Scraping & URL Ayrıştırma ✨ YENİ
 | Bileşen | Seçim | Gerekçe |
@@ -343,6 +411,75 @@ CREATE TABLE seo_keywords (
 );
 ```
 
+### 3.3 Ek Agent Tabloları (Multi-Agent Mimarisi)
+
+```sql
+-- Ürünler (Pricing + Inventory Agent için merkezi ürün kaydı)
+CREATE TABLE products (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id       UUID REFERENCES users(id) ON DELETE CASCADE,
+  workspace_id  UUID REFERENCES workspaces(id),
+  name          VARCHAR(500) NOT NULL,
+  sku           VARCHAR(100),
+  category      VARCHAR(500),
+  cost_price    DECIMAL(10,2),
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- İçerik versiyonları (Content Agent çıktı geçmişi)
+CREATE TABLE content_versions (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id    UUID REFERENCES products(id) ON DELETE CASCADE,
+  platform      VARCHAR(50) NOT NULL,
+  content       JSONB NOT NULL,
+  score         SMALLINT,
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Görsel işlem kayıtları (Image Agent)
+CREATE TABLE image_jobs (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id    UUID REFERENCES products(id) ON DELETE CASCADE,
+  input_url     TEXT NOT NULL,
+  output_url    TEXT,
+  skill         VARCHAR(50) NOT NULL,       -- 'bg-remove' | 'studio-render' | 'optimize' | 'batch'
+  status        VARCHAR(50) DEFAULT 'processing',
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Fiyat geçmişi (Pricing Agent)
+CREATE TABLE price_history (
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id       UUID REFERENCES products(id) ON DELETE CASCADE,
+  platform         VARCHAR(50) NOT NULL,
+  price            DECIMAL(10,2) NOT NULL,
+  competitor_prices JSONB,                  -- [{"seller": "...", "price": 199.90}]
+  created_at       TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Stok hareketleri (Inventory Agent)
+CREATE TABLE stock_movements (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id    UUID REFERENCES products(id) ON DELETE CASCADE,
+  quantity      INTEGER NOT NULL,
+  type          VARCHAR(50) NOT NULL,       -- 'in' | 'out' | 'adjustment'
+  date          TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- AI job logları (Tüm agentlar için merkezi log)
+CREATE TABLE ai_jobs (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agent         VARCHAR(50) NOT NULL,       -- 'content' | 'image' | 'pricing' | 'inventory'
+  skill         VARCHAR(50) NOT NULL,
+  input         JSONB,
+  output        JSONB,
+  tokens        INTEGER,
+  cost          DECIMAL(8,4),
+  duration      INTEGER,                    -- ms
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
 ### 3.2 Row Level Security (RLS)
 
 ```sql
@@ -443,10 +580,48 @@ POST   /api/billing/portal    → Stripe customer portal
 POST   /api/webhooks/stripe   → Stripe webhook handler
 
 ═══════════════════════════════════════════════════════
+ORCHESTRATOR ✨ YENİ
+═══════════════════════════════════════════════════════
+POST   /api/orchestrator      → Ana giriş noktası
+                                 Body: { type: 'full_audit' | 'content' | 'image' | 'pricing' | 'inventory', productId, options }
+                                 Response: { jobId, status, results? }
+
+═══════════════════════════════════════════════════════
+AGENT INTERNAL ENDPOINTS ✨ YENİ
+═══════════════════════════════════════════════════════
+POST   /api/agents/content/generate
+POST   /api/agents/content/analyze
+POST   /api/agents/content/convert
+POST   /api/agents/image/bg-remove
+POST   /api/agents/image/studio-render
+POST   /api/agents/pricing/competitor
+POST   /api/agents/pricing/price-rec
+POST   /api/agents/inventory/forecast
+POST   /api/agents/inventory/reorder
+
+═══════════════════════════════════════════════════════
+PRICING AGENT ✨ YENİ
+═══════════════════════════════════════════════════════
+POST   /api/pricing/competitor   → Rakip fiyat analizi (scraping)
+POST   /api/pricing/recommend    → Fiyat önerisi (Claude)
+POST   /api/pricing/margin       → Margin analizi
+GET    /api/pricing/history/:id  → Fiyat geçmişi
+
+═══════════════════════════════════════════════════════
+INVENTORY AGENT ✨ YENİ
+═══════════════════════════════════════════════════════
+POST   /api/inventory/forecast   → Stok tahmini
+POST   /api/inventory/reorder    → Yeniden sipariş önerisi
+GET    /api/inventory/anomalies  → Anomali tespitleri
+GET    /api/inventory/seasonal   → Sezonsal stok takvimi
+
+═══════════════════════════════════════════════════════
 PLATFORM WEBHOOK'LARI (Phase 3)
 ═══════════════════════════════════════════════════════
 POST   /api/webhooks/shopify      → Shopify yeni ürün → otomatik içerik üret
 POST   /api/webhooks/woocommerce  → WooCommerce yeni ürün → otomatik içerik üret
+POST   /api/webhooks/trigger      → Trigger.dev job tamamlandı
+POST   /api/webhooks/fal          → fal.ai görsel hazır
 
 ═══════════════════════════════════════════════════════
 API ANAHTARLARI (Mevcut)
@@ -628,6 +803,16 @@ Response: {
 | Enterprise | Özel | Özel | Özel |
 
 Uygulama: **Upstash Redis** sliding window algoritması
+
+### 4.7 Content Agent — Platform Dönüştürme Hedefleri ✨ YENİ
+
+| Platform | Özellikler |
+|---|---|
+| **Trendyol** | max 500 karakter, emoji destekli, Türkçe |
+| **Amazon TR** | bullet points, SEO keywords, 2000 karakter |
+| **Hepsiburada** | kategori uyumlu, teknik özellik odaklı |
+| **Instagram** | hashtag + kısa metin, görsel odaklı |
+| **n11** | fiyat rekabetçi vurgu, garanti bilgisi |
 
 ---
 
@@ -906,6 +1091,39 @@ const generation = trace.generation({
 - Hata oranları (model failures, timeout vb.)
 - **Modül bazlı metrikler:** Generate vs Convert vs Analyze performans karşılaştırması ✨
 
+### 9.2 Langfuse Trace Yapısı ✨ YENİ
+
+```
+Trace: request_{id}
+  ├── Span: orchestrator.route
+  ├── Span: agent.content.generate
+  │     └── Generation: claude-call
+  ├── Span: agent.image.bg-remove
+  └── Span: agent.pricing.competitor
+```
+
+### 9.3 Redis Key Yapısı ✨ YENİ
+
+```
+omnix:{agent}:{skill}:{identifier} → cached data
+omnix:rate:{userId}                → rate limit counter
+omnix:queue:{jobId}               → job status
+```
+
+#### Pricing Agent Redis Cache
+```
+competitor:{productId}:{platform} → TTL: 15 dakika
+price-rec:{productId}            → TTL: 1 saat
+seasonal:{productId}:{month}     → TTL: 24 saat
+```
+
+### 9.4 Monitoring Alert Kuralları ✨ YENİ
+
+- API hata oranı > %5 → **Slack bildirimi**
+- Günlük maliyet > $10 → **E-posta**
+- Stok anomalisi → **Anında bildirim**
+- Rakip fiyat değişimi > %10 → **Dashboard uyarısı**
+
 ---
 
 ## 10. Trendyol Kategori Senkronizasyonu
@@ -1041,6 +1259,123 @@ NEXT_PUBLIC_APP_URL=https://omnixengine.com
 - Amazon Avrupa (DE, UK, FR) ve Etsy entegrasyonu (Çoklu dil)
 - Özel model fine-tuning (kategoriye özgü Türkçe SEO)
 - Mobile PWA optimizasyonu
+
+---
+
+## 15. Pricing Agent Detayları ✨ YENİ
+
+### Sorumluluk
+Rakip fiyatlarını analiz ederek optimal fiyat önerileri üretme.
+
+### Skills
+| Skill | Girdi | Çıktı | Provider |
+|-------|-------|-------|----------|
+| `competitor` | Ürün adı/ASIN | Rakip fiyat listesi | Puppeteer + Cheerio |
+| `price-rec` | Maliyet + rakip fiyat | Optimal fiyat | Claude sonnet-4 |
+| `margin` | Fiyat + maliyet | Margin analizi | Hesaplama |
+| `seasonal` | Ürün + tarih | Sezonsal fiyat takvimi | Claude sonnet-4 |
+
+### Scraping Hedefleri
+- Trendyol ürün fiyatları
+- Amazon TR fiyatları  
+- Hepsiburada fiyatları
+- n11 fiyatları
+
+### Klasör Yapısı
+```
+src/agents/pricing/
+├── skills/
+│   ├── competitor.skill.ts
+│   ├── price-rec.skill.ts
+│   ├── margin.skill.ts
+│   └── seasonal.skill.ts
+├── tools/
+│   ├── scraper.tool.ts       # Puppeteer + Cheerio
+│   └── price-calculator.tool.ts
+├── prompts/
+│   ├── price-rec.prompt.ts
+│   └── seasonal.prompt.ts
+└── types/
+    └── pricing.types.ts
+```
+
+---
+
+## 16. Inventory Agent Detayları ✨ YENİ
+
+### Sorumluluk
+Stok tahminleme, yeniden sipariş noktaları ve anomali tespiti.
+
+### Skills
+| Skill | Girdi | Çıktı | Yöntem |
+|-------|-------|-------|--------|
+| `forecast` | Satış geçmişi | 30/60/90 günlük tahmin | Claude + istatistik |
+| `reorder` | Stok + tahmin | Sipariş önerisi + tarih | Hesaplama |
+| `anomaly` | Stok hareketi | Anomali uyarıları | Claude sonnet-4 |
+| `seasonal` | Ürün kategorisi | Sezonsal stok takvimi | Claude sonnet-4 |
+
+### Trigger.dev Jobs
+```
+- forecast-daily    → Her gün 02:00'de çalışır
+- reorder-check     → Her 6 saatte bir çalışır
+- anomaly-detect    → Gerçek zamanlı (webhook)
+- seasonal-plan     → Ayda bir çalışır
+```
+
+### Klasör Yapısı
+```
+src/agents/inventory/
+├── skills/
+│   ├── forecast.skill.ts
+│   ├── reorder.skill.ts
+│   ├── anomaly.skill.ts
+│   └── seasonal.skill.ts
+├── tools/
+│   ├── stats.tool.ts         # İstatistik hesaplamaları
+│   └── trigger-jobs.tool.ts
+├── prompts/
+│   ├── forecast.prompt.ts
+│   └── anomaly.prompt.ts
+└── types/
+    └── inventory.types.ts
+```
+
+---
+
+## 17. Sprint Detaylı Checklist ✨ YENİ
+
+### Sprint 1-2 (Tamamlandı - %30)
+- [x] Proje kurulumu ve mimari
+- [x] Content Agent - generate.skill
+- [x] Content Agent - analyze.skill
+- [x] Supabase şema kurulumu
+- [x] Langfuse entegrasyonu
+
+### Sprint 3 (Şu an)
+- [ ] Image Agent - tüm skills
+- [ ] Content Agent - convert.skill
+- [ ] Content Agent - bulk.skill
+- [ ] fal.ai entegrasyonu
+- [ ] Replicate entegrasyonu
+
+### Sprint 4
+- [ ] Pricing Agent - tüm skills
+- [ ] Scraping layer (Cheerio + Puppeteer)
+- [ ] Redis cache stratejisi implementasyonu
+- [ ] Pricing dashboard UI
+
+### Sprint 5
+- [ ] Inventory Agent - tüm skills
+- [ ] Trigger.dev job'ları
+- [ ] Anomaly detection sistemi
+- [ ] Inventory dashboard UI
+
+### Sprint 6
+- [ ] Orchestrator tam implementasyon
+- [ ] Paralel execution
+- [ ] Full Product Audit özelliği
+- [ ] Performance optimizasyonu
+- [ ] Production deployment
 
 ---
 

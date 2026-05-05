@@ -1,8 +1,7 @@
 import { SignIn } from '@clerk/nextjs'
-import { auth } from '@clerk/nextjs/server'
-import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import AuthRedirect from '@/components/auth/AuthRedirect'
 
 export const metadata: Metadata = {
   title: 'Giriş Yap — ContentForge TR',
@@ -40,13 +39,12 @@ const FEATURES = [
   },
 ]
 
-export default async function LoginPage() {
-  // Zaten giriş yapılmışsa dashboard'a yönlendir
-  const { userId } = await auth()
-  if (userId) redirect('/app')
+export default function LoginPage() {
 
   return (
     <main className="min-h-screen flex flex-col md:flex-row">
+      {/* Giriş yapmış kullanıcıyı otomatik dashboard'a yönlendir */}
+      <AuthRedirect />
 
       {/* ── SOL: Koyu Marketing Paneli ─────────────────────────────────── */}
       <section className="hidden md:flex w-1/2 relative bg-[#1A1A2E] overflow-hidden items-center justify-center p-12">
@@ -118,6 +116,8 @@ export default async function LoginPage() {
           <SignIn
             routing="path"
             path="/login"
+            signUpUrl="/register"
+            forceRedirectUrl="/app"
             appearance={{
               elements: {
                 formButtonPrimary: 'bg-[#FF6B35] hover:bg-[#e55a2b] text-sm normal-case',

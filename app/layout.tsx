@@ -14,7 +14,15 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+        signInUrl="/login"
+        signUpUrl="/register"
+        signInFallbackRedirectUrl="/app"
+        signUpFallbackRedirectUrl="/app"
+        signInForceRedirectUrl="/app"
+        signUpForceRedirectUrl="/app"
+        afterSignOutUrl="/"
+      >
       <html lang="tr" data-scroll-behavior="smooth">
         <head>
           <link rel="preconnect" href="https://fonts.googleapis.com" />

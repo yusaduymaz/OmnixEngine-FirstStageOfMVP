@@ -328,6 +328,10 @@ function FeaturesSection() {
 }
 
 function ImageStudioSection() {
+  // ─── Görsel yolları (ileride admin paneli / Supabase Storage'dan çekilecek) ───
+  const STUDIO_BEFORE_IMG = '/marketing/studio-before.png'
+  const STUDIO_AFTER_IMG = '/marketing/studio-after.png'
+
   const steps = [
     {
       n: '1',
@@ -418,15 +422,11 @@ function ImageStudioSection() {
                 {/* Öncesi */}
                 <div className="relative rounded-xl overflow-hidden border border-[#E8E4DC]">
                   <div className="aspect-square bg-gradient-to-br from-[#d4c8b8] via-[#c9bda9] to-[#b8a994] flex items-center justify-center relative">
-                    {/* Dağınık arka plan simülasyonu */}
-                    <div className="absolute top-3 left-3 w-8 h-5 bg-[#a89880]/40 rounded-sm rotate-12" />
-                    <div className="absolute bottom-6 right-4 w-10 h-3 bg-[#a89880]/30 rounded-sm -rotate-6" />
-                    <div className="absolute top-1/4 right-1/4 w-4 h-4 bg-[#a89880]/20 rounded-full" />
-                    {/* Ürün placeholder */}
-                    <div className="w-24 h-28 bg-white/90 rounded-lg shadow-sm flex flex-col items-center justify-center">
-                      <div className="w-14 h-16 bg-[#FF6B35]/15 rounded-md mb-1" />
-                      <div className="w-10 h-1 bg-[#E8E4DC] rounded-full" />
-                    </div>
+                    <img
+                      src={STUDIO_BEFORE_IMG}
+                      alt="Ürün görseli — işlem öncesi"
+                      className="w-full h-full object-cover absolute inset-0"
+                    />
                   </div>
                   <div className="absolute bottom-0 inset-x-0 bg-red-500/90 text-white text-[10px] font-bold text-center py-1">
                     ÖNCESİ
@@ -436,15 +436,11 @@ function ImageStudioSection() {
                 {/* Sonrası */}
                 <div className="relative rounded-xl overflow-hidden border border-purple-200">
                   <div className="aspect-square bg-white flex items-center justify-center relative">
-                    {/* Temiz stüdyo arka plan */}
-                    <div className="absolute inset-0 bg-gradient-to-b from-white via-[#fafafa] to-[#f0f0f0]" />
-                    {/* Ürün placeholder — gölgeli */}
-                    <div className="relative w-24 h-28 bg-white rounded-lg shadow-lg flex flex-col items-center justify-center border border-[#f0f0f0]">
-                      <div className="w-14 h-16 bg-[#FF6B35]/20 rounded-md mb-1" />
-                      <div className="w-10 h-1 bg-[#E8E4DC] rounded-full" />
-                    </div>
-                    {/* Yansıma efekti */}
-                    <div className="absolute bottom-2 w-20 h-3 bg-black/5 rounded-full blur-sm" />
+                    <img
+                      src={STUDIO_AFTER_IMG}
+                      alt="Ürün görseli — işlem sonrası"
+                      className="w-full h-full object-cover absolute inset-0"
+                    />
                   </div>
                   <div className="absolute bottom-0 inset-x-0 bg-green-500/90 text-white text-[10px] font-bold text-center py-1">
                     SONRASI
@@ -743,11 +739,10 @@ function MarketplaceSection() {
                   ].map((p) => (
                     <div
                       key={p.name}
-                      className={`rounded-lg py-2 text-center text-[10px] font-bold transition-all ${
-                        p.active
-                          ? `${p.color} text-white shadow-sm`
-                          : 'bg-[#F8F7F4] text-[#9E9EA8] border border-dashed border-[#E8E4DC]'
-                      }`}
+                      className={`rounded-lg py-2 text-center text-[10px] font-bold transition-all ${p.active
+                        ? `${p.color} text-white shadow-sm`
+                        : 'bg-[#F8F7F4] text-[#9E9EA8] border border-dashed border-[#E8E4DC]'
+                        }`}
                     >
                       {p.name}
                     </div>
