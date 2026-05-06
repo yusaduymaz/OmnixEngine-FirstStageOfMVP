@@ -75,9 +75,9 @@ const PLAN_LABELS: Record<string, { label: string; color: string; icon: React.Re
 }
 
 const UPGRADE_PLANS = [
-  { id: 'starter' as PlanId, name: 'Starter', price: '₺299/ay', credits: '500 kredi/ay', features: ['2 platform', 'İçerik kütüphanesi', 'E-posta desteği'] },
-  { id: 'growth' as PlanId, name: 'Growth', price: '₺799/ay', credits: '2.000 kredi/ay', features: ['Toplu yükleme', 'API erişimi', 'Öncelikli destek'] },
-  { id: 'agency' as PlanId, name: 'Agency', price: '₺2.499/ay', credits: '10.000 kredi/ay', features: ['Workspace', 'SLA desteği', 'Özel entegrasyon'] },
+  { id: 'starter' as PlanId, name: 'Starter', price: '₺299/ay', credits: '2.500.000 kredi (~500 işlem/ay)', features: ['2 platform', 'İçerik kütüphanesi', 'E-posta desteği'] },
+  { id: 'growth' as PlanId, name: 'Growth', price: '₺799/ay', credits: '10.000.000 kredi (~2.000 işlem/ay)', features: ['Toplu yükleme', 'API erişimi', 'Öncelikli destek'] },
+  { id: 'agency' as PlanId, name: 'Agency', price: '₺2.499/ay', credits: '50.000.000 kredi (~10.000 işlem/ay)', features: ['Workspace', 'SLA desteği', 'Özel entegrasyon'] },
 ]
 
 export default function SettingsTabbedPage() {
@@ -694,6 +694,35 @@ export default function SettingsTabbedPage() {
                 </div>
               </div>
             ) : null}
+
+            {/* Enterprise Kartı */}
+            {billingData?.plan !== 'enterprise' && (
+              <div className="rounded-2xl border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-6 shadow-sm">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck size={18} className="text-green-600" />
+                      <p className="font-bold text-[#1A1A2E] text-base">Enterprise</p>
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">Özel Fiyatlandırma</span>
+                    </div>
+                    <p className="text-xs text-[#6B6B7B]">500.000.000 kredi (100.000+ işlem/ay)</p>
+                    <div className="flex flex-wrap gap-3 mt-2">
+                      {['Sınırsız Workspace', 'SLA Garantisi', 'Dedikeli Destek', 'API + Webhook', 'Team Sistemi'].map((f) => (
+                        <span key={f} className="flex items-center gap-1 text-xs text-green-700">
+                          <CheckCircle2 size={11} className="shrink-0" /> {f}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <a
+                    href="mailto:sales@omnixengine.com"
+                    className="shrink-0 inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 px-6 py-3 text-sm font-bold text-white hover:bg-green-700 transition-colors"
+                  >
+                    Bize Ulaşın
+                  </a>
+                </div>
+              </div>
+            )}
 
             {/* Son Kredi İşlemleri */}
             {billingData?.transactions && billingData.transactions.length > 0 && (

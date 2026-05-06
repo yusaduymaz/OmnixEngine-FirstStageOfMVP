@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { SignOutButton } from '@clerk/nextjs'
+import { usePlan } from '@/hooks/usePlan'
 
 // ── İkonlar ────────────────────────────────────────────────────────────────
 
@@ -90,6 +91,9 @@ const NAV_ITEMS = [
 
 function Sidebar() {
   const pathname = usePathname()
+  const { planId, creditsRemaining, creditsLimit, isLoading } = usePlan()
+  const showUpgrade = !isLoading && (planId === 'trial' || planId === 'starter')
+  const usagePct = creditsLimit > 0 ? Math.min(100, Math.round(((creditsLimit - creditsRemaining) / creditsLimit) * 100)) : 0
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 border-r border-orange-100/20 bg-slate-50 flex flex-col p-4 z-50">
@@ -147,6 +151,30 @@ function Sidebar() {
           <IconSparkles />
           Yeni İçerik Oluştur
         </Link>
+
+        {showUpgrade && (
+          <div className="mb-3 p-3 rounded-xl bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200/60">
+            <div className="flex justify-between text-xs text-slate-500 mb-1">
+              <span>Kalan Kredi</span>
+              <span className="font-semibold text-slate-700">
+                {Math.round(creditsRemaining / 5000).toLocaleString('tr-TR')} işlem
+              </span>
+            </div>
+            <div className="w-full h-1.5 bg-orange-100 rounded-full mb-3">
+              <div
+                className="h-1.5 rounded-full transition-all"
+                style={{
+                  width: `${Math.max(2, usagePct)}%`,
+                  background: usagePct > 80 ? '#ef4444' : 'linear-gradient(90deg,#fb923c,#f97316)'
+                }}
+              />
+            </div>
+            <Link href="/app/settings/billing"
+              className="flex items-center justify-center gap-2 w-full py-2 rounded-lg bg-[#FF6B35] text-white text-xs font-bold shadow-sm shadow-orange-600/20 hover:bg-orange-600 transition-colors">
+              ⚡ Plan Yükselt
+            </Link>
+          </div>
+        )}
 
         <a href="#" className="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-900 text-sm rounded-xl hover:bg-slate-100 transition-colors">
           <IconHelp />

@@ -133,8 +133,8 @@ export default function InventoryPage() {
             />
           </div>
 
-          <div className="md:col-span-2 flex items-end">
-            <button 
+          <div className="md:col-span-2 flex flex-col gap-1 justify-end">
+            <button
               type="submit"
               disabled={loading || !productName || currentStock === ''}
               className="w-full bg-[#6366f1] hover:bg-[#4f46e5] disabled:opacity-50 text-white rounded-2xl py-4 px-6 text-sm font-bold transition-all shadow-lg shadow-indigo-600/10 flex items-center justify-center gap-2 active:scale-95"
@@ -145,6 +145,7 @@ export default function InventoryPage() {
                 <>Hesapla <BarChart2 className="w-4 h-4" /></>
               )}
             </button>
+            <p className="text-center text-xs text-[#9E9EA8]">~4.000 kredi/işlem</p>
           </div>
         </form>
         {error && (

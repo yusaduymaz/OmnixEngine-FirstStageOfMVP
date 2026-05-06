@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { pricingSkill } from '@/agents/pricing/skills/competitor.skill'
 import { PricingSkillInput } from '@/agents/pricing/types'
+import { requireFeature } from '@/lib/billing/feature-gates'
 
 export async function POST(req: Request) {
   try {
@@ -8,6 +9,8 @@ export async function POST(req: Request) {
     if (!userId) {
       return Response.json({ error: 'Giriş yapmanız gerekiyor.' }, { status: 401 })
     }
+
+    await requireFeature(userId, 'pricingAgent')
 
     const body = await req.json()
     

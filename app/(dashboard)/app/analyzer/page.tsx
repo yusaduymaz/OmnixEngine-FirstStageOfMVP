@@ -299,6 +299,7 @@ export default function AnalyzerPage() {
                   </>
                 )}
               </button>
+              <p className="text-center text-xs text-[#9E9EA8]">~3.000 kredi/işlem</p>
             </form>
           </div>
 

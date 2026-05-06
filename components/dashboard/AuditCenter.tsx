@@ -168,7 +168,7 @@ export default function AuditCenter() {
                   className="w-full bg-slate-50 border-none rounded-2xl py-4 px-4 text-sm focus:ring-2 focus:ring-orange-500 transition-all outline-none"
                 />
               </div>
-              <div className="md:col-span-2">
+              <div className="md:col-span-2 flex flex-col gap-1">
                 <button
                   type="submit"
                   disabled={loading || !productName || !price}
@@ -176,6 +176,7 @@ export default function AuditCenter() {
                 >
                   {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Başlat <ArrowRight className="w-4 h-4" /></>}
                 </button>
+                <p className="text-center text-xs text-slate-400">~15.000 kredi toplam</p>
               </div>
             </div>
 
@@ -236,9 +237,9 @@ export default function AuditCenter() {
             className="grid grid-cols-1 md:grid-cols-3 gap-4"
           >
             {[
-              { id: 'content', label: 'İçerik Analizi', icon: SearchCode, data: result?.content },
-              { id: 'pricing', label: 'Fiyat Rekabeti', icon: TrendingUp, data: result?.pricing },
-              { id: 'inventory', label: 'Stok Sağlığı', icon: Package, data: result?.inventory }
+              { id: 'content', label: 'İçerik Analizi', icon: SearchCode, data: result?.content, cost: '~3.000 kredi' },
+              { id: 'pricing', label: 'Fiyat Rekabeti', icon: TrendingUp, data: result?.pricing, cost: '~8.000 kredi' },
+              { id: 'inventory', label: 'Stok Sağlığı', icon: Package, data: result?.inventory, cost: '~4.000 kredi' }
             ].map((agent) => (
               <div key={agent.id} className="bg-white border border-slate-100 rounded-[24px] p-5 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between mb-4">
@@ -255,7 +256,10 @@ export default function AuditCenter() {
                   ) : null}
                 </div>
 
-                <h4 className="text-sm font-bold text-slate-900">{agent.label}</h4>
+                <div className="flex items-baseline justify-between">
+                  <h4 className="text-sm font-bold text-slate-900">{agent.label}</h4>
+                  <span className="text-[10px] text-slate-400">{agent.cost}</span>
+                </div>
 
                 <div className="mt-2">
                   {progress[agent.id] === 'loading' ? (

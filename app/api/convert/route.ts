@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { validatePlatformIds, type PlatformId } from '@/prompts/system'
 import { convertSkill, ConvertSkillError } from '@/agents/content/skills/convert.skill'
+import { checkRateLimit } from '@/lib/redis'
+import { getUserPlan, RATE_LIMITS } from '@/lib/billing/feature-gates'
 
 export const maxDuration = 60
 export const dynamic = 'force-dynamic'
@@ -21,6 +23,19 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth()
   if (!userId) {
     return NextResponse.json({ hata: 'Giriş yapmanız gerekiyor.' }, { status: 401 })
+  }
+
+  try {
+    const plan = await getUserPlan(userId)
+    const { allowed } = await checkRateLimit(userId, RATE_LIMITS[plan].maxRequests, 60)
+    if (!allowed) {
+      return NextResponse.json(
+        { hata: 'Çok fazla istek gönderdiniz. Lütfen bir dakika bekleyin.' },
+        { status: 429, headers: { 'Retry-After': '60' } }
+      )
+    }
+  } catch (rateLimitErr) {
+    console.error('[API/convert] Rate limit kontrolü hatası:', rateLimitErr)
   }
 
   let body: unknown

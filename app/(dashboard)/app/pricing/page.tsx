@@ -142,8 +142,8 @@ export default function PricingPage() {
             />
           </div>
 
-          <div className="md:col-span-2 flex items-end">
-            <button 
+          <div className="md:col-span-2 flex flex-col gap-1 justify-end">
+            <button
               type="submit"
               disabled={loading || !productName || !basePrice}
               className="w-full bg-[#1A1A2E] hover:bg-[#2d2d4a] disabled:opacity-50 text-white rounded-2xl py-4 px-6 text-sm font-bold transition-all shadow-lg shadow-[#1a1a2e]/10 flex items-center justify-center gap-2 active:scale-95"
@@ -154,6 +154,7 @@ export default function PricingPage() {
                 <>Analiz Et <ArrowRight className="w-4 h-4" /></>
               )}
             </button>
+            <p className="text-center text-xs text-[#9E9EA8]">~8.000 kredi/işlem</p>
           </div>
         </form>
         {error && (

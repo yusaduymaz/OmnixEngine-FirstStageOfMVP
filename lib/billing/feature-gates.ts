@@ -53,3 +53,14 @@ export function featureLimit(plan: PlanId, feature: FeatureKey): number {
   if (typeof v === 'number') return v
   return v ? 1 : 0
 }
+
+/**
+ * API Rate Limiting — dakika başı maksimum istek sayısı
+ */
+export const RATE_LIMITS: Record<PlanId, { maxRequests: number; windowSeconds: number }> = {
+  trial:      { maxRequests: 2,  windowSeconds: 60 },
+  starter:    { maxRequests: 5,  windowSeconds: 60 },
+  growth:     { maxRequests: 10, windowSeconds: 60 },
+  agency:     { maxRequests: 20, windowSeconds: 60 },
+  enterprise: { maxRequests: 50, windowSeconds: 60 },
+}

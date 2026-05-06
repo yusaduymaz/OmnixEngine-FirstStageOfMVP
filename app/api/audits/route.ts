@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
+import { auth, currentUser } from '@clerk/nextjs/server'
 import { getSupabaseAdmin } from '@/lib/supabase/server'
+import { PLANS } from '@/lib/stripe/plans'
 
 export async function GET() {
   try {
@@ -11,20 +12,49 @@ export async function GET() {
 
     const supabase = getSupabaseAdmin()
 
-    // 1. Kullanıcının UUID'sini al
+    // 1. Kullanıcının UUID'sini al (lazy upsert)
     console.log('[Audits API] Clerk ID aranıyor:', userId)
-    const { data: user, error: userError } = await supabase
+    let { data: user, error: userError } = await supabase
       .from('users')
       .select('id')
       .eq('clerk_id', userId)
-      .single()
+      .maybeSingle()
 
-    if (userError || !user) {
-      console.error('[Audits API] Kullanıcı bulunamadı veya hata:', userError)
-      return NextResponse.json({ error: 'Kullanıcı kaydı bulunamadı.' }, { status: 404 })
+    if (userError) {
+      console.error('[Audits API] Sorgu hatası:', userError)
+      return NextResponse.json({ error: 'Kullanıcı sorgulanırken hata oluştu.' }, { status: 500 })
     }
 
-    console.log('[Audits API] Bulunan User UUID:', user.id)
+    // Kullanıcı yoksa lazy upsert
+    if (!user) {
+      console.log('[Audits API] Kullanıcı DB\'de yok, lazy upsert başlatılıyor...')
+      const clerkUser = await currentUser()
+      const email = clerkUser?.emailAddresses?.[0]?.emailAddress ?? ''
+      const fullName = [clerkUser?.firstName, clerkUser?.lastName].filter(Boolean).join(' ')
+
+      const { data: newUser, error: insertError } = await supabase
+        .from('users')
+        .insert({
+          clerk_id: userId,
+          email,
+          full_name: fullName || email,
+          plan: 'trial',
+          credits_limit: PLANS.trial.microCredits,
+          credits_used: 0,
+        })
+        .select('id')
+        .single()
+
+      if (insertError || !newUser) {
+        console.error('[Audits API] Kullanıcı oluşturulamadı:', insertError)
+        return NextResponse.json({ error: 'Hesap oluşturulamadı.' }, { status: 500 })
+      }
+
+      user = newUser
+      console.log('[Audits API] Kullanıcı lazy upsert ile oluşturuldu:', user.id)
+    } else {
+      console.log('[Audits API] Bulunan User UUID:', user.id)
+    }
 
     // 2. Denetimleri çek
     const { data: audits, error: auditsError } = await supabase

@@ -254,15 +254,16 @@ export default function ImageStudioPage() {
                   {isLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Yapay Zeka İşliyor (3 Kredi)...
+                      Yapay Zeka İşliyor...
                     </>
                   ) : (
                     <>
                       <Wand2 className="w-4 h-4 text-[#FF6B35]" />
-                      Görseli Sihirle (3 Kredi)
+                      Görseli İşle
                     </>
                   )}
                </button>
+               <p className="text-center text-xs text-[#9E9EA8] mt-1">~40 kredi/işlem (fal.ai)</p>
             </div>
           </div>
 

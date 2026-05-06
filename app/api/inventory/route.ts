@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { inventorySkill } from '@/agents/inventory/skills/forecast.skill'
 import { InventorySkillInput } from '@/agents/inventory/types'
+import { requireFeature } from '@/lib/billing/feature-gates'
 
 export async function POST(req: Request) {
   try {
@@ -8,6 +9,8 @@ export async function POST(req: Request) {
     if (!userId) {
       return Response.json({ error: 'Giriş yapmanız gerekiyor.' }, { status: 401 })
     }
+
+    await requireFeature(userId, 'inventoryAgent')
 
     const body = await req.json()
 

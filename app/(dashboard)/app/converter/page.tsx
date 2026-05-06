@@ -346,6 +346,9 @@ export default function ConverterPage() {
                   </>
                 )}
               </button>
+              <p className="text-center text-xs text-[#9E9EA8]">
+                {activeTab === 'url' ? '~6.000 kredi/işlem (URL + AI)' : '~4.000 kredi/işlem (AI)'}
+              </p>
             </form>
           </div>
 

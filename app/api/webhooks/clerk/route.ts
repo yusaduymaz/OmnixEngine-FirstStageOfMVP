@@ -2,6 +2,7 @@ import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { Webhook } from 'svix'
 import { createClient } from '@supabase/supabase-js'
+import { PLANS } from '@/lib/stripe/plans'
 
 // Supabase service role client (RLS'i bypass eder — yalnızca sunucu tarafında kullan)
 function getSupabaseAdmin() {
@@ -118,7 +119,7 @@ export async function POST(request: Request) {
       full_name: fullName,
       plan: 'trial',
       credits_used: 0,
-      credits_limit: 50,
+      credits_limit: PLANS.trial.microCredits,
     })
 
     if (error) {
