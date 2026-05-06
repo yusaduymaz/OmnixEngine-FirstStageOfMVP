@@ -502,10 +502,8 @@ export async function generateSkill(input: GenerateSkillInput): Promise<Readable
         controller.enqueue(encoder.encode('\n__ERROR__:İçerik üretildi ancak format okunamadı. Lütfen tekrar deneyin.'))
       }
 
-      controller.close()
-
       // ══════════════════════════════════════════════════════
-      // DB Kayıt (async — response'u bekletmez)
+      // DB Kayıt (async)
       // ══════════════════════════════════════════════════════
       await saveGenerationAndDeductCredit({
         supabase,
@@ -523,6 +521,8 @@ export async function generateSkill(input: GenerateSkillInput): Promise<Readable
         seoScore: typeof parsedResult?.seo_score === 'number' ? parsedResult.seo_score : null,
         ms: Date.now() - startTime,
       })
+
+      controller.close()
     },
   })
 

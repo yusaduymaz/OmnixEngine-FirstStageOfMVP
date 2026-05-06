@@ -83,13 +83,23 @@ export default async function LibraryPage() {
     ])
 
     if (genResult.error) {
-      console.error('[Library] Generations sorgu hatası:', genResult.error)
+      console.error('[Library] Generations sorgu hatası:', {
+        message: genResult.error.message,
+        code: genResult.error.code,
+        details: genResult.error.details,
+        hint: genResult.error.hint
+      })
     } else {
       generations = (genResult.data ?? []) as GenerationRow[]
     }
 
     if (analysisResult.error) {
-      console.error('[Library] Analyses sorgu hatası:', analysisResult.error)
+      console.error('[Library] Analyses sorgu hatası:', {
+        message: analysisResult.error.message,
+        code: analysisResult.error.code,
+        details: analysisResult.error.details,
+        hint: analysisResult.error.hint
+      })
     } else {
       analyses = (analysisResult.data ?? []) as AnalysisRow[]
     }

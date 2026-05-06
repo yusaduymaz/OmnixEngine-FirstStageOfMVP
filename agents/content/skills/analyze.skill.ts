@@ -200,28 +200,31 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
     }
   }
 
-  // 5. Veritabanı Kayıt ve Kredi Düşümü (Asenkron)
+  // 5. Veritabanı Kayıt ve Kredi Düşümü (Awaited)
   const finalResult: AnalysisResult = {
     ...resultObject,
     scrapedData
   }
 
-  Promise.all([
-    supabase.from('analyses').insert({
-      user_id: user.id,
-      source_url: input.url,
-      target_platform: input.platforms,
-      scraped_data: scrapedData as unknown as Record<string, unknown>,
-      overall_score: finalResult.overallScore,
-      criteria_scores: finalResult.criteriaScores as unknown as Record<string, unknown>,
-      suggestions: (finalResult as any).suggestions || null,
-      analysis_ms: Date.now() - startTime,
-      credits_charged: 1
-    }),
-    supabase.from('users').update({ credits_used: user.credits_used + 1 }).eq('id', user.id)
-  ]).catch(err => {
+  try {
+    await Promise.all([
+      supabase.from('analyses').insert({
+        user_id: user.id,
+        source_url: input.url,
+        target_platform: input.platforms,
+        scraped_data: scrapedData as unknown as Record<string, unknown>,
+        overall_score: finalResult.overallScore,
+        criteria_scores: finalResult.criteriaScores as unknown as Record<string, unknown>,
+        suggestions: (finalResult as any).suggestions || null,
+        analysis_ms: Date.now() - startTime,
+        credits_charged: 1
+      }),
+      supabase.from('users').update({ credits_used: user.credits_used + 1 }).eq('id', user.id)
+    ])
+    console.log('[Analyze] DB kayıt ve kredi düşümü başarılı.')
+  } catch (err) {
     console.error('[Analyze] DB kayıt/kredi düşümü hatası:', err)
-  })
+  }
 
   return finalResult
 }

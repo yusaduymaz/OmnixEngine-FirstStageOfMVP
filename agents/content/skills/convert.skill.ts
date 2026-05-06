@@ -194,32 +194,35 @@ export async function convertSkill(input: ConvertSkillInput): Promise<ConvertRes
     resultObject = { results: [] }
   }
 
-  // 5. Veritabanı Kayıt ve Kredi Düşümü (Asenkron)
+  // 5. Veritabanı Kayıt ve Kredi Düşümü (Awaited)
   const finalResult: ConvertResult = {
     results: resultObject.results,
     scrapedData
   }
 
-  Promise.all([
-    supabase.from('generations').insert({
-      user_id: user.id,
-      source_type: 'convert',
-      source_url: input.sourceUrl || null,
-      source_platform: input.sourcePlatform || null,
-      product_name: scrapedData?.title || 'Dönüştürülen Ürün',
-      platform: input.targetPlatforms,
-      content_types: ['converter'],
-      tone: 'professional',
-      results: finalResult as unknown as Record<string, unknown>,
-      tokens_used: tokensUsed,
-      model_used: modelUsed,
-      generation_ms: Date.now() - startTime,
-      status: 'completed',
-    }),
-    supabase.from('users').update({ credits_used: user.credits_used + 1 }).eq('id', user.id)
-  ]).catch(err => {
+  try {
+    await Promise.all([
+      supabase.from('generations').insert({
+        user_id: user.id,
+        source_type: 'convert',
+        source_url: input.sourceUrl || null,
+        source_platform: input.sourcePlatform || null,
+        product_name: scrapedData?.title || 'Dönüştürülen Ürün',
+        platform: input.targetPlatforms,
+        content_types: ['converter'],
+        tone: 'professional',
+        results: finalResult as unknown as Record<string, unknown>,
+        tokens_used: tokensUsed,
+        model_used: modelUsed,
+        generation_ms: Date.now() - startTime,
+        status: 'completed',
+      }),
+      supabase.from('users').update({ credits_used: user.credits_used + 1 }).eq('id', user.id)
+    ])
+    console.log('[Convert] DB kayıt ve kredi düşümü başarılı.')
+  } catch (err) {
     console.error('[Convert] DB kayıt/kredi düşümü hatası:', err)
-  })
+  }
 
   return finalResult
 }
