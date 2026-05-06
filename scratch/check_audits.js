@@ -1,14 +1,24 @@
 
+/**
+ * Bu scripti çalıştırmak için: 
+ * node --env-file=.env.local scratch/check_audits.js
+ */
 const { createClient } = require('@supabase/supabase-js');
 
-const url = 'https://qpvkchohjvrziyvcbcwy.supabase.co';
-const serviceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwdmtjaG9oanZyeml5dmNiY3d5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTQ3MTM4NSwiZXhwIjoyMDkxMDQ3Mzg1fQ._zVT6OHbYPXr4KEJWtKbq55M9XpDd2ZqpeAwpTo8rII';
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!url || !serviceKey) {
+  console.error('Hata: NEXT_PUBLIC_SUPABASE_URL veya SUPABASE_SERVICE_ROLE_KEY environment variable olarak bulunamadı!');
+  console.error('Çalıştırmak için: node --env-file=.env.local scratch/check_audits.js');
+  process.exit(1);
+}
 
 const supabase = createClient(url, serviceKey);
 
 async function checkAudits() {
   console.log('--- AUDIT CHECK START ---');
-  
+
   // 1. All Audits
   const { data: audits, error: auditErr } = await supabase
     .from('audits')
