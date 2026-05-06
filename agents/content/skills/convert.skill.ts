@@ -11,6 +11,7 @@ import { scrapeUrl } from '../utils/scrape'
 import type { ConvertSkillInput, ConvertResult } from '../types/convert.types'
 import { buildSystemPrompt, Tone, PLATFORM_LABELS, type PlatformId } from '@/prompts/system'
 import { buildConvertPrompt } from '../prompts/convert.prompt'
+import { CREDIT_COSTS } from '@/lib/billing/credit-display'
 
 // Error sınıfı
 export class ConvertSkillError extends Error {
@@ -47,8 +48,8 @@ async function resolveUser(userId: string, supabase: ReturnType<typeof getSupaba
       clerk_id: userId,
       email,
       full_name: fullName || email,
-      plan: 'free',
-      credits_limit: 50,
+      plan: 'trial',
+      credits_limit: 250_000,
       credits_used: 0,
     })
     .select('id, credits_used, credits_limit, plan')
@@ -201,6 +202,11 @@ export async function convertSkill(input: ConvertSkillInput): Promise<ConvertRes
   }
 
   try {
+    // Flat kredi maliyeti: URL var ise convert_url (6000), yoksa convert_text (4000)
+    const totalCredits = input.sourceUrl
+      ? CREDIT_COSTS.convert_url
+      : CREDIT_COSTS.convert_text
+
     await Promise.all([
       supabase.from('generations').insert({
         user_id: user.id,
@@ -217,7 +223,18 @@ export async function convertSkill(input: ConvertSkillInput): Promise<ConvertRes
         generation_ms: Date.now() - startTime,
         status: 'completed',
       }),
-      supabase.from('users').update({ credits_used: user.credits_used + 1 }).eq('id', user.id)
+      supabase.rpc('increment_credits', { user_uuid: user.id, amount: totalCredits }),
+      supabase.from('credit_transactions').insert({
+        user_id: user.id,
+        amount: -totalCredits,
+        type: 'usage',
+        module: 'convert',
+        reference: null,
+        tokens_input: 0,
+        tokens_output: tokensUsed,
+        model: modelUsed,
+        cost_usd: totalCredits / 200, // Reverse micro-credits to USD
+      })
     ])
     console.log('[Convert] DB kayıt ve kredi düşümü başarılı.')
   } catch (err) {

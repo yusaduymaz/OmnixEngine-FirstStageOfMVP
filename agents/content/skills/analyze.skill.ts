@@ -3,7 +3,7 @@
  */
 import { currentUser } from '@clerk/nextjs/server'
 import { getSupabaseAdmin } from '@/lib/supabase/server'
-import { tokensToCredits, tokensToUsd, scrapeCredits } from '@/lib/billing/credit-cost'
+import { CREDIT_COSTS } from '@/lib/billing/credit-display'
 import { generateObject } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 import Groq from 'groq-sdk'
@@ -50,8 +50,8 @@ async function resolveUser(userId: string, supabase: ReturnType<typeof getSupaba
       clerk_id: userId,
       email,
       full_name: fullName || email,
-      plan: 'free',
-      credits_limit: 50,
+      plan: 'trial',
+      credits_limit: 250_000,
       credits_used: 0,
     })
     .select('id, credits_used, credits_limit, plan')
@@ -219,10 +219,8 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
     scrapedData
   }
 
-  // Token-bazlı kredi maliyeti: scraping + AI çağrısı
-  const aiCredits = tokensToCredits(modelUsed, inputTokens, outputTokens)
-  const totalCredits = aiCredits + scrapeCredits()
-  const costUsd = tokensToUsd(modelUsed, inputTokens, outputTokens)
+  // Flat kredi maliyeti (öngörülebilir, UI ile tutarlı)
+  const totalCredits = CREDIT_COSTS.analyze
 
   try {
     console.log('[Analyze] DB Kayıt denemesi:', { userId: user.id, source: input.url, credits: totalCredits })
@@ -260,7 +258,7 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
       tokens_input: inputTokens,
       tokens_output: outputTokens,
       model: modelUsed,
-      cost_usd: costUsd,
+      cost_usd: totalCredits / 200, // Reverse micro-credits to USD
     })
   } catch (err) {
     console.error('[Analyze] DB kayıt/kredi düşümü sırasında kritik hata:', err)

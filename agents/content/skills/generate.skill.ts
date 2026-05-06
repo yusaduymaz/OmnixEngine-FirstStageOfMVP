@@ -21,7 +21,7 @@ import { streamText } from 'ai'
 import Groq from 'groq-sdk'
 import { buildSystemPrompt, buildUserMessage, type Tone, type PlatformId } from '@/prompts/system'
 import { getSupabaseAdmin } from '@/lib/supabase/server'
-import { tokensToCredits, tokensToUsd } from '@/lib/billing/credit-cost'
+import { CREDIT_COSTS } from '@/lib/billing/credit-display'
 import type { GenerateSkillInput, SupabaseUserRow, ParsedTitle, ExtractedJSON } from '../types/generate.types'
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -135,8 +135,8 @@ async function resolveUser(
       clerk_id: userId,
       email,
       full_name: fullName || email,
-      plan: 'free',
-      credits_limit: 50,
+      plan: 'trial',
+      credits_limit: 250_000,
       credits_used: 0,
     })
     .select('id, credits_used, credits_limit, plan')
@@ -323,9 +323,8 @@ async function saveGenerationAndDeductCredit(params: {
     console.log('[Generate] DB kayıt başarılı. Status:', parsedResult ? 'completed' : 'failed')
   }
 
-  // Token-bazlı kredi düşümü (atomik RPC — race condition önleme)
-  const microCredits = tokensToCredits(modelUsed, inputTokens, outputTokens)
-  const costUsd = tokensToUsd(modelUsed, inputTokens, outputTokens)
+  // Flat kredi maliyeti (öngörülebilir, UI ile tutarlı)
+  const microCredits = CREDIT_COSTS.generate
 
   const { error: rpcError } = await supabase
     .rpc('increment_credits', { user_uuid: user.id, amount: microCredits })
@@ -341,7 +340,7 @@ async function saveGenerationAndDeductCredit(params: {
     tokens_input: inputTokens,
     tokens_output: outputTokens,
     model: modelUsed,
-    cost_usd: costUsd,
+    cost_usd: microCredits / 200, // Reverse micro-credits to USD (1 USD = 200 micro-credits)
   })
 }
 

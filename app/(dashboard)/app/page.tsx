@@ -164,7 +164,7 @@ export default async function DashboardPage() {
               </div>
               <div className="text-xs">
                 <p className="text-[#9E9EA8] font-bold uppercase tracking-widest">Kalan Kredi</p>
-                <p className="text-[#1A1A2E] font-bold">{creditsRemaining} <span className="text-[#9E9EA8]">/ {user?.credits_limit}</span></p>
+                <p className="text-[#1A1A2E] font-bold">{Math.round(creditsRemaining / 5000)} <span className="text-[#9E9EA8]">/ {Math.round((user?.credits_limit ?? 0) / 5000)} işlem</span></p>
               </div>
             </div>
             <div className="rounded-2xl border border-[#E8E4DC] bg-white px-4 py-3 flex items-center gap-3">

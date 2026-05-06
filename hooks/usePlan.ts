@@ -30,8 +30,8 @@ export function usePlan() {
   const query = useQuery({
     queryKey: ['user', 'billing'],
     queryFn: fetchBilling,
-    staleTime: 60_000,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   })
 
   const planId = (query.data?.plan ?? 'trial') as PlanId
