@@ -10,6 +10,7 @@ import { z } from 'zod'
 import { scrapeUrl } from '../utils/scrape'
 import type { ConvertSkillInput, ConvertResult } from '../types/convert.types'
 import { buildSystemPrompt, Tone, PLATFORM_LABELS, type PlatformId } from '@/prompts/system'
+import { buildConvertPrompt } from '../prompts/convert.prompt'
 
 // Error sınıfı
 export class ConvertSkillError extends Error {
@@ -94,31 +95,7 @@ export async function convertSkill(input: ConvertSkillInput): Promise<ConvertRes
     tone: 'professional' as Tone,
   })
 
-  const prompt = `
-Aşağıda verilen ürün içeriğini kaynak platformdan (${sourceLabel}) alıp, şu hedef platformların (${targetPlatformLabels}) SEO ve içerik kurallarına uygun olarak DÖNÜŞTÜR (REWRITE).
-
-Orijinal İçerik:
----
-${sourceContentToProcess.slice(0, 4000)}
----
-
-Görev:
-Her bir hedef platform için;
-- Kurallara (karakter sınırları, yasaklı kelimeler, bullet point zorunlulukları vb.) tam uyumlu,
-- Yeni bir Başlık (title) ve Açıklama (description) yaz.
-(HTML tagleri KULLANMA, metin ve madde imi (-) kullan.)
-
-YANIT FORMATI (Sadece JSON):
-{
-  "results": [
-    {
-      "platform": "platform_id",
-      "title": "yeni başlık",
-      "description": "yeni açıklama"
-    }
-  ]
-}
-`
+  const prompt = buildConvertPrompt(sourceLabel, targetPlatformLabels, sourceContentToProcess)
 
   // 4. AI Çağrısı (Fallback Zinciri)
   const openrouterKey = process.env.OPENROUTER_API_KEY
@@ -226,7 +203,10 @@ YANIT FORMATI (Sadece JSON):
   Promise.all([
     supabase.from('generations').insert({
       user_id: user.id,
-      product_name: scrapedData?.title || 'Converter - Belirsiz Ürün',
+      source_type: 'convert',
+      source_url: input.sourceUrl || null,
+      source_platform: input.sourcePlatform || null,
+      product_name: scrapedData?.title || 'Dönüştürülen Ürün',
       platform: input.targetPlatforms,
       content_types: ['converter'],
       tone: 'professional',

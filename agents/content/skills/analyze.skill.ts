@@ -10,6 +10,7 @@ import { z } from 'zod'
 import * as cheerio from 'cheerio'
 import type { AnalyzeSkillInput, AnalysisResult } from '../types/analyze.types'
 import { buildSystemPrompt, Tone } from '@/prompts/system'
+import { buildAnalyzePrompt } from '../prompts/analyze.prompt'
 
 import { scrapeUrl } from '../utils/scrape'
 
@@ -86,33 +87,7 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
     tone: 'professional' as Tone, // Analiz için nötr/profesyonel kullanıyoruz
   })
 
-  const prompt = `
-Aşağıda verilen e-ticaret ürün sayfası içeriğini analiz et. Hedef platformların (${input.platforms.join(', ')}) kurallarına göre değerlendir.
-
-Ürün Sayfası Verileri:
-- Başlık/H1: ${scrapedData.title}
-- Meta Description: ${scrapedData.description}
-- Sayfa İçeriği (özet): ${scrapedData.content.slice(0, 3000)}
-
-Lütfen bu içeriği aşağıdaki kriterlere göre incele ve her biri için puan (0-100), durum (pass, warn, fail), mesaj ve iyileştirme önerisi sun.
-1. Başlık Kalitesi (Uzunluk, anahtar kelime, netlik)
-2. Açıklama Derinliği (Bilgi zenginliği, fayda odaklılık, eksiklikler)
-3. Anahtar Kelime Yoğunluğu (SEO açısından yeterli mi?)
-4. Platform Kurallarına Uygunluk (Seçilen platformların yasaklı kelimeleri, uzunluk sınırları vb.)
-
-Ayrıca genel bir SEO skoru (0-100) hesapla.
-
-YANIT FORMATI (Sadece JSON):
-{
-  "overallScore": 85,
-  "criteriaScores": {
-    "titleQuality": { "score": 90, "status": "pass", "message": "...", "suggestion": "...", "currentValue": "..." },
-    "descriptionDepth": { "score": 70, "status": "warn", "message": "...", "suggestion": "...", "currentValue": "..." },
-    "keywordDensity": { "score": 80, "status": "pass", "message": "...", "suggestion": "..." },
-    "platformRules": { "score": 95, "status": "pass", "message": "...", "suggestion": "..." }
-  }
-}
-`
+  const prompt = buildAnalyzePrompt(input.platforms, scrapedData)
 
   // 4. AI Çağrısı (Zod schema ile structure generation)
   const openrouterKey = process.env.OPENROUTER_API_KEY
@@ -150,6 +125,12 @@ YANIT FORMATI (Sadece JSON):
         suggestion: z.string().optional()
       }),
       platformRules: z.object({
+        score: z.number().min(0).max(100),
+        status: z.enum(['pass', 'warn', 'fail']),
+        message: z.string(),
+        suggestion: z.string().optional()
+      }),
+      legalCompliance: z.object({
         score: z.number().min(0).max(100),
         status: z.enum(['pass', 'warn', 'fail']),
         message: z.string(),
