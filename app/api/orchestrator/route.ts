@@ -1,16 +1,61 @@
-// OmniX Engine — Orchestrator API Route
-// Ana giriş noktası: full_audit, content, image, pricing, inventory
+import { auth } from '@clerk/nextjs/server'
+import { routeRequest } from '@/orchestrator/router'
+import { executeParallel } from '@/orchestrator/executor'
+import { SharedContext, OrchestratorRequest } from '@/orchestrator/types'
 
-import { NextResponse } from 'next/server'
+export async function POST(req: Request) {
+  try {
+    const { userId } = await auth()
+    if (!userId) {
+      return Response.json({ error: 'Giriş yapmanız gerekiyor.' }, { status: 401 })
+    }
 
-// TODO: Sprint 6'da implement edilecek
-// import { routeRequest } from '@/orchestrator/router'
-// import { executeParallel } from '@/orchestrator/executor'
-// import { createContext } from '@/orchestrator/context'
+    const body = await req.json()
+    
+    // Basit validasyon
+    if (!body.name || !body.price) {
+      return Response.json({ error: 'Ürün adı ve fiyat gereklidir.' }, { status: 400 })
+    }
 
-export async function POST() {
-  return NextResponse.json(
-    { error: 'Orchestrator henüz aktif değil — Sprint 6\'da tamamlanacak' },
-    { status: 501 }
-  )
+    // 1. Router ile rota belirle
+    const orchestratorReq: OrchestratorRequest = {
+      type: body.type || 'full_audit',
+      productId: body.id || 'new_audit',
+      userId: userId,
+      options: body.options
+    }
+    const routes = routeRequest(orchestratorReq)
+
+    // 2. Shared Context oluştur
+    const context: SharedContext = {
+      userId: userId,
+      productId: orchestratorReq.productId,
+      productData: {
+        name: body.name,
+        price: body.price,
+        url: body.url,
+        stock: body.stock,
+        currency: body.currency || 'TRY',
+        weeklySales: body.weeklySales
+      }
+    }
+
+    // 3. Executor ile paralel çalıştır
+    console.log(`[Orchestrator API] ${routes.length} agent paralel başlatılıyor...`)
+    const { results, errors } = await executeParallel(routes, context)
+
+    return Response.json({
+      success: true,
+      jobId: orchestratorReq.productId,
+      results,
+      errors: Object.keys(errors).length > 0 ? errors : undefined
+    })
+
+  } catch (error: any) {
+    console.error('[Orchestrator API] Genel Hata:', error)
+    return Response.json(
+      { error: error.message || 'Denetim sırasında bir hata oluştu.' },
+      { status: 500 }
+    )
+  }
 }

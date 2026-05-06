@@ -26,12 +26,14 @@ Design ve mimari detaylar için: @c:\Users\duyma\Desktop\contentforge-tr\design.
   - /image-studio → Görsel stüdyosu
   - /pricing → Fiyat analizi
   - /inventory → Stok yönetimi
+  - /audits → Denetim Kütüphanesi (Full Reports)
 - app/api → Backend route'ları
-- agents/ → 9 Agent implementasyonu (Ürün: content, image, pricing, inventory | Takım: pm, frontend, backend, qa, security)
-- orchestrator/ → Merkezi yönetici (router, executor, context)
+- agents/ → Agentlar (Ürün: content, pricing, inventory, image)
+- orchestrator/ → Merkezi yönetici (Paralel Execution, Audit Saving)
 - lib/ → Servis istemcileri (anthropic, supabase, redis, langfuse, trigger)
 - prompts/ → Sistem prompt dosyaları
 - types/ → TypeScript tip tanımları
+- supabase/migrations/ → Veritabanı şeması ve RPC fonksiyonları (Atomic Credits)
 
 ## Kodlama Kuralları
 - Tüm metinler ve yorumlar Türkçe

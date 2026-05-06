@@ -61,6 +61,18 @@ const IconImage = () => (
   </svg>
 )
 
+const IconCurrency = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.546 1.16 4.455 1.16 6.001 0m-6.001-3.909a4.823 4.823 0 010-6.545M15 11l.879.659c1.546 1.16 4.455 1.16 6.001 0M15 11V5M12 6l.879-.659c1.546-1.16 4.455-1.16 6.001 0" />
+  </svg>
+)
+
+const IconBox = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+  </svg>
+)
+
 // ── Nav Linkleri ────────────────────────────────────────────────────────────
 
 const NAV_ITEMS = [
@@ -69,6 +81,8 @@ const NAV_ITEMS = [
   { href: '/app/analyzer', label: 'Analizör', icon: IconSearch, exact: false },
   { href: '/app/converter', label: 'Dönüştürücü', icon: IconRefresh, exact: false },
   { href: '/app/image-studio', label: 'Görsel Stüdyosu', icon: IconImage, exact: false },
+  { href: '/app/pricing', label: 'Fiyat Analizi', icon: IconCurrency, exact: false },
+  { href: '/app/inventory', label: 'Envanter Yönetimi', icon: IconBox, exact: false },
   { href: '/app/library', label: 'Kütüphane', icon: IconLibrary, exact: false },
   { href: '/app/settings/profile', label: 'Ayarlar', icon: IconSettings, exact: false },
 ]

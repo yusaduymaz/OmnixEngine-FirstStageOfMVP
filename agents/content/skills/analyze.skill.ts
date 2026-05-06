@@ -217,14 +217,13 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
         suggestions: (finalResult as any).suggestions || null,
         analysis_ms: Date.now() - startTime,
         credits_charged: 1
-      }),
-      supabase.from('users').update({ credits_used: user.credits_used + 1 }).eq('id', user.id)
+      }).select('id').single(),
+      supabase.rpc('increment_credits', { user_uuid: user.id })
     ])
 
-    if (analysisSave.error) {
-      console.error('[Analyze] Analiz kaydı başarısız:', analysisSave.error)
-    } else {
-      console.log('[Analyze] Analiz başarıyla kaydedildi.')
+    if (analysisSave.data) {
+      finalResult.id = analysisSave.data.id
+      console.log('[Analyze] Analiz başarıyla kaydedildi, ID:', finalResult.id)
     }
 
     if (creditUpdate.error) {

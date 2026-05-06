@@ -52,49 +52,55 @@ Orchestrator, tüm agentları yöneten merkezi bileşendir:
 - **İstek yönlendirme** — Hangi agent(lar) çalışacak karar verir
 - **Paralel execution** — Birden fazla agent aynı anda (`Promise.allSettled`)
 - **Context paylaşımı** — Agentlar arası veri transferi
+- **Atomic Credit Management** — Paralel işlemlerde `increment_credits` RPC ile güvenli kredi düşümü
+- **Audit Library Integration** — Çoklu analiz sonuçlarını `audits` tablosunda birleştirerek kütüphaneye kaydetme
 - **Zod ile input/output validasyonu**
-- **Rate limiting** (Redis)
 - **Langfuse ile izleme**
 
 #### Dosya Yapısı
 ```
 src/orchestrator/
-├── router.ts        # Hangi agent(lar) çalışacak karar verir
-├── executor.ts      # Promise.all ile paralel çalıştırma
+├── router.ts        # İstek tipine göre agent rotalarını belirler
+├── executor.ts      # Agentları paralel çalıştırır, sonuçları birleştirir ve DB kaydını yönetir
 ├── context.ts       # SharedContext tip ve yönetimi
 └── types.ts         # OrchestratorRequest/Response tipleri
 ```
 
-#### router.ts — Agent Seçim Mantığı
-```typescript
-type AgentRoute = {
-  agent: 'content' | 'image' | 'pricing' | 'inventory'
-  skills: string[]
-  priority: 'high' | 'normal' | 'low'
-}
-
-// Full Product Audit → tüm agentlar paralel
-function routeRequest(req: OrchestratorRequest): AgentRoute[] {
-  if (req.type === 'full_audit') {
-    return [
-      { agent: 'content',   skills: ['analyze', 'generate'], priority: 'high' },
-      { agent: 'image',     skills: ['bg-remove', 'optimize'], priority: 'high' },
-      { agent: 'pricing',   skills: ['competitor', 'price-rec'], priority: 'high' },
-      { agent: 'inventory', skills: ['forecast', 'anomaly'], priority: 'normal' },
-    ]
-  }
-}
-```
-
-#### executor.ts — Paralel Çalıştırma
+#### executor.ts — Akıllı Paralel Çalıştırma
 ```typescript
 async function executeParallel(routes: AgentRoute[], context: SharedContext) {
-  const results = await Promise.allSettled(
+  // 1. Agentları paralel başlat
+  const settlements = await Promise.allSettled(
     routes.map(route => executeAgent(route, context))
   )
-  return mergeResults(results)
+  
+  // 2. Başarılı sonuçları topla ve hataları logla
+  const { results, errors } = mergeResults(settlements)
+  
+  // 3. Full Audit ise ana raporu (Audit Report) kütüphaneye kaydet
+  if (isFullAudit) {
+    await saveConsolidatedAudit(results, context)
+  }
+  
+  return { results, errors }
 }
 ```
+
+---
+
+## 2. Veri ve Kredi Güvenliği ✨ YENİ
+
+### 2.1 Atomic Credit Increment (RPC)
+Paralel çalışan ajanların kredi çakışması (race condition) yaşamaması için veritabanı seviyesinde atomik artırım kullanılır:
+```sql
+CREATE FUNCTION increment_credits(user_uuid UUID) RETURNS void AS $$
+  UPDATE users SET credits_used = credits_used + 1 WHERE id = user_uuid;
+$$ LANGUAGE plpgsql;
+```
+
+### 2.2 Audit Raporlama Sistemi
+Birden fazla ajanın ürettiği raporlar `audits` tablosunda tek bir master ID altında toplanır. Bu tablo; `analysis_id`, `pricing_id` ve `inventory_id` alanları ile alt raporlara referans verir.
+
 
 ---
 

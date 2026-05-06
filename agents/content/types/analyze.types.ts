@@ -21,6 +21,7 @@ export interface CriteriaScore {
 }
 
 export interface AnalysisResult {
+  id?: string
   overallScore: number
   criteriaScores: {
     titleQuality: CriteriaScore

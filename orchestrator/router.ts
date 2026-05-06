@@ -16,7 +16,6 @@ export function routeRequest(req: OrchestratorRequest): AgentRoute[] {
     case 'full_audit':
       return [
         { agent: 'content', skills: ['analyze', 'generate'], priority: 'high' },
-        { agent: 'image', skills: ['bg-remove', 'optimize'], priority: 'high' },
         { agent: 'pricing', skills: ['competitor', 'price-rec'], priority: 'high' },
         { agent: 'inventory', skills: ['forecast', 'anomaly'], priority: 'normal' },
       ]
