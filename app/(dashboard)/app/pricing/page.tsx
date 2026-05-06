@@ -226,7 +226,10 @@ export default function PricingPage() {
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-white/60">Önerilen Satış Fiyatı</h4>
-                  <p className="text-2xl font-bold text-white">{result.suggestedPrice.toLocaleString('tr-TR')} <span className="text-sm opacity-60">TRY</span></p>
+                  <p className="text-2xl font-bold text-white">
+                    {(result.suggestedPrice || (result as any).suggested_price || 0).toLocaleString('tr-TR')} 
+                    <span className="text-sm opacity-60"> {currencyInfo.code}</span>
+                  </p>
                 </div>
               </div>
             </div>
@@ -265,7 +268,7 @@ export default function PricingPage() {
                             </div>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <span className="text-sm font-bold text-[#1A1A2E]">{comp.price.toLocaleString('tr-TR')} TRY</span>
+                            <span className="text-sm font-bold text-[#1A1A2E]">{(comp.price || 0).toLocaleString('tr-TR')} TRY</span>
                           </td>
                           <td className="px-6 py-4 text-center">
                             <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold ${comp.in_stock ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>

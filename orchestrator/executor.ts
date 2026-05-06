@@ -8,6 +8,7 @@ import type { AgentType } from '@/types/global'
 import { analyzeSkill } from '@/agents/content/skills/analyze.skill'
 import { pricingSkill } from '@/agents/pricing/skills/competitor.skill'
 import { inventorySkill } from '@/agents/inventory/skills/forecast.skill'
+import { getSupabaseAdmin } from '@/lib/supabase/server'
 // import { processImage } from '@/agents/image/skills/process.skill' // Geliştirme aşamasında
 
 // ═══════════════════════════════════════════════════════
@@ -62,9 +63,9 @@ async function executeAgent(
 
       case 'image':
         // Image agent şu an placeholder döner (Daha sonra gerçek skill eklenecek)
-        return { 
-          agent: 'image', 
-          result: { status: 'mocked', message: 'Görsel analizi yakında aktif edilecek.' } 
+        return {
+          agent: 'image',
+          result: { status: 'mocked', message: 'Görsel analizi yakında aktif edilecek.' }
         }
 
       default:
@@ -115,34 +116,49 @@ export async function executeParallel(
   // ═══════════════════════════════════════════════════════
   if (routes.some(r => r.agent === 'content') && routes.length > 1) {
     try {
+      console.log('[Orchestrator] Audit raporu kaydediliyor...')
       const supabase = getSupabaseAdmin()
       const { productData, userId } = context
-      
-      // Gerçek kullanıcı ID'sini resolve et (clerk_id'den uuid'ye)
-      const { data: user } = await supabase
+
+      // 1. Kullanıcıyı resolve et
+      const { data: user, error: userErr } = await supabase
         .from('users')
         .select('id')
         .eq('clerk_id', userId)
         .single()
 
-      if (user) {
-        await supabase.from('audits').insert({
+      if (userErr || !user) {
+        console.error('[Orchestrator] Kullanıcı bulunamadı, kayıt iptal edildi:', userErr)
+      } else {
+        const auditRecord = {
           user_id: user.id,
           product_name: productData.name,
-          product_price: productData.price,
-          product_url: productData.url,
+          product_price: Number(productData.price) || 0,
+          product_url: productData.url || null,
           currency: productData.currency || 'TRY',
           analysis_id: (results.content as any)?.id || null,
           pricing_id: (results.pricing as any)?.id || null,
           inventory_id: (results.inventory as any)?.id || null,
-          seo_score: (results.content as any)?.overallScore || 0,
-          pricing_score: (results.pricing as any)?.overallScore || 0,
+          seo_score: Number((results.content as any)?.overallScore) || 0,
+          pricing_score: Number((results.pricing as any)?.overallScore) || 0,
           inventory_status: (results.inventory as any)?.stockHealth || 'unknown'
-        })
-        console.log('[Orchestrator] Audit raporu kütüphaneye kaydedildi.')
+        }
+
+        console.log('[Orchestrator] DB Insert Denemesi:', auditRecord)
+
+        const { error: insertErr, data: insertData } = await supabase
+          .from('audits')
+          .insert(auditRecord)
+          .select()
+
+        if (insertErr) {
+          console.error('[Orchestrator] Audit tablosuna kayıt başarısız:', insertErr)
+        } else {
+          console.log('[Orchestrator] Audit raporu kütüphaneye başarıyla kaydedildi:', insertData?.[0]?.id)
+        }
       }
     } catch (err) {
-      console.error('[Orchestrator] Audit kaydı sırasında hata:', err)
+      console.error('[Orchestrator] Audit kaydı sırasında beklenmedik hata:', err)
     }
   }
 

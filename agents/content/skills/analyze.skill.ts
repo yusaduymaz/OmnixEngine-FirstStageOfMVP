@@ -74,11 +74,22 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
   }
 
   // 2. Scraping
-  console.log(`[Analyze] URL kazınıyor: ${input.url}`)
-  const scrapedData = await safeScrapeUrl(input.url)
+  let scrapedData = { title: '', description: '', content: '', images: [] as string[] }
+  if (input.url && input.url.trim() !== '') {
+    console.log(`[Analyze] URL kazınıyor: ${input.url}`)
+    scrapedData = await safeScrapeUrl(input.url)
+  } else {
+    console.log('[Analyze] URL boş, manuel giriş olarak devam ediliyor.')
+    scrapedData = {
+      title: input.productName,
+      description: 'Manuel giriş yapıldı, sayfa kazınamadı.',
+      content: '',
+      images: []
+    }
+  }
 
-  if (!scrapedData.title && !scrapedData.description && !scrapedData.content) {
-    throw new AnalyzeSkillError('Sayfadan içerik çıkarılamadı. Boş sayfa olabilir.', 400)
+  if (!scrapedData.title && !scrapedData.description) {
+    throw new AnalyzeSkillError('Analiz edilecek içerik bulunamadı.', 400)
   }
 
   // 3. Prompt Hazırlığı

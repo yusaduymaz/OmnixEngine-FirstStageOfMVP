@@ -83,6 +83,7 @@ const NAV_ITEMS = [
   { href: '/app/image-studio', label: 'Görsel Stüdyosu', icon: IconImage, exact: false },
   { href: '/app/pricing', label: 'Fiyat Analizi', icon: IconCurrency, exact: false },
   { href: '/app/inventory', label: 'Envanter Yönetimi', icon: IconBox, exact: false },
+  { href: '/app/audits', label: 'Denetim Raporları', icon: IconLibrary, exact: false },
   { href: '/app/library', label: 'Kütüphane', icon: IconLibrary, exact: false },
   { href: '/app/settings/profile', label: 'Ayarlar', icon: IconSettings, exact: false },
 ]

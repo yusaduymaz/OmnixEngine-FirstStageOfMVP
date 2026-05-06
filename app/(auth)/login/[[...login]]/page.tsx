@@ -4,9 +4,9 @@ import type { Metadata } from 'next'
 import AuthRedirect from '@/components/auth/AuthRedirect'
 
 export const metadata: Metadata = {
-  title: 'Giriş Yap — ContentForge TR',
+  title: 'Giriş Yap — Omnix Engine',
   description:
-    'ContentForge TR hesabınıza giriş yapın. Trendyol ve Hepsiburada için SEO odaklı AI içerik üretmeye başlayın.',
+    'Omnix Engine hesabınıza giriş yapın. Trendyol ve Hepsiburada için SEO odaklı AI içerik üretmeye başlayın.',
 }
 
 const FEATURES = [
@@ -138,7 +138,7 @@ export default function LoginPage() {
           </div>
           <span className="text-base font-bold text-white"
             style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}>
-            ContentForge TR
+            Omnix Engine
           </span>
         </Link>
       </div>

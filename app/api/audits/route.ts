@@ -5,7 +5,7 @@ import { getSupabaseAdmin } from '@/lib/supabase/server'
 export async function GET() {
   try {
     const { userId } = auth()
-    if (!userId) return new NextResponse('Unauthorized', { status: 401 })
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const supabase = getSupabaseAdmin()
 
