@@ -3,14 +3,24 @@ import { getSupabaseAdmin } from '@/lib/supabase/server'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import AuditCenter from '@/components/dashboard/AuditCenter'
+import NewsTicker from '@/components/dashboard/NewsTicker'
 import {
+  Sparkles,
+  RefreshCcw,
+  SearchCode,
+  Megaphone,
+  Newspaper,
+  BadgePercent,
   TrendingUp,
   History,
   LayoutDashboard,
   CreditCard,
-  BarChart4,
+  BarChart3,
+  Layers,
+  BadgeCheck,
   ChevronRight,
-  ArrowUpRight
+  ArrowUpRight,
+  Wand2
 } from 'lucide-react'
 
 export const metadata: Metadata = {
@@ -22,6 +32,10 @@ interface RecentGen {
   product_name: string
   created_at: string
   status: string
+}
+
+interface SeoRow {
+  seo_score: number
 }
 
 function relativeDate(isoDate: string): string {
@@ -47,6 +61,7 @@ export default async function DashboardPage() {
     .single()
 
   let totalGenerations = 0
+  let monthlyGenerations = 0
   let avgSeoScore: number | null = null
   let recentGenerations: RecentGen[] = []
 
@@ -54,9 +69,21 @@ export default async function DashboardPage() {
     const { count } = await supabase.from('generations').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
     totalGenerations = count ?? 0
 
+    const startOfMonth = new Date()
+    startOfMonth.setDate(1)
+    startOfMonth.setHours(0, 0, 0, 0)
+
+    const { count: monthlyCount } = await supabase
+      .from('generations')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('created_at', startOfMonth.toISOString())
+    monthlyGenerations = monthlyCount ?? 0
+
     const { data: seoData } = await supabase.from('generations').select('seo_score').eq('user_id', user.id).not('seo_score', 'is', null).limit(30)
     if (seoData?.length) {
-      const sum = seoData.reduce((acc: number, r: any) => acc + r.seo_score, 0)
+      const rows = seoData as SeoRow[]
+      const sum = rows.reduce((acc, row) => acc + row.seo_score, 0)
       avgSeoScore = Math.round(sum / seoData.length)
     }
 
@@ -65,140 +92,308 @@ export default async function DashboardPage() {
   }
 
   const creditsRemaining = (user?.credits_limit ?? 50) - (user?.credits_used ?? 0)
+  const quickActions = [
+    {
+      title: 'Sıfırdan Üret',
+      description: 'Yeni ürün için SEO odaklı içerik oluştur.',
+      href: '/app/generate',
+      icon: Sparkles,
+      bg: 'bg-[#FFF2EC]',
+      color: 'text-[#FF6B35]'
+    },
+    {
+      title: 'Linkten Dönüştür',
+      description: 'Mevcut ürün linkini hedef platforma uyarlayın.',
+      href: '/app/converter',
+      icon: RefreshCcw,
+      bg: 'bg-[#FFF2EC]',
+      color: 'text-[#FF6B35]'
+    },
+    {
+      title: 'İçeriği Analiz Et',
+      description: 'Canlı listing için denetim ve iyileştirme önerisi alın.',
+      href: '/app/analyzer',
+      icon: SearchCode,
+      bg: 'bg-[#FFF2EC]',
+      color: 'text-[#FF6B35]'
+    },
+  ]
+
+  const getStatusLabel = (status: string) => {
+    if (status === 'completed') return { label: 'Tamamlandı', className: 'bg-green-50 text-green-700 border-green-200' }
+    if (status === 'failed') return { label: 'Başarısız', className: 'bg-red-50 text-red-700 border-red-200' }
+    return { label: 'İşleniyor', className: 'bg-amber-50 text-amber-700 border-amber-200' }
+  }
+
+  const infoBoxes = [
+    {
+      title: 'Haftanın Kampanyası',
+      description: 'Growth planında yıllık ödemeye geçen hesaplarda %20 indirim aktif.',
+      cta: 'Detayı gör',
+      href: '/app/settings/billing',
+      icon: BadgePercent,
+    },
+    {
+      title: 'Pazar Haberi',
+      description: 'Amazon TR kategori bazlı anahtar kelime eşleşme kurallarını güncelledi.',
+      cta: 'Analizi aç',
+      href: '/app/analyzer',
+      icon: Newspaper,
+    },
+    {
+      title: 'Duyuru',
+      description: 'Yeni optimize edilmiş prompt akışıyla üretim hızında iyileştirme yayında.',
+      cta: 'İçerik üret',
+      href: '/app/generate',
+      icon: Megaphone,
+    },
+  ]
 
   return (
-    <div className="p-8 max-w-[1400px] mx-auto space-y-10">
-      {/* ── Üst Bar ── */}
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900 font-bricolage">Hoş geldin, {firstName} 👋</h2>
-          <p className="text-sm text-slate-500">Bugün 4 farklı AI ajanıyla e-ticaret stratejini optimize etmeye hazır mısın?</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="bg-white border border-slate-100 rounded-2xl px-4 py-2 flex items-center gap-3 shadow-sm">
-            <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
-              <CreditCard size={16} />
+    <div className="p-6 md:p-8 space-y-8">
+      <div className="rounded-[24px] border border-[#E8E4DC] p-6 md:p-8 shadow-sm">
+        <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-1">
+            <h2 className="text-3xl font-bold tracking-tight text-[#1A1A2E] font-bricolage">Hoş geldin, {firstName} 👋</h2>
+            <p className="text-sm text-[#6B6B7B]">Bugün üretim, dönüşüm, analiz ve görsel süreçlerini tek panelden yönetebilirsin.</p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <div className="rounded-2xl border border-[#E8E4DC] bg-white px-4 py-3 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-[#FFF2EC] text-[#FF6B35] flex items-center justify-center">
+                <CreditCard size={18} />
+              </div>
+              <div className="text-xs">
+                <p className="text-[#9E9EA8] font-bold uppercase tracking-widest">Kalan Kredi</p>
+                <p className="text-[#1A1A2E] font-bold">{creditsRemaining} <span className="text-[#9E9EA8]">/ {user?.credits_limit}</span></p>
+              </div>
             </div>
-            <div className="text-xs">
-              <p className="text-slate-400 font-bold uppercase tracking-widest">Kalan Kredi</p>
-              <p className="text-slate-900 font-bold">{creditsRemaining} <span className="opacity-40">/ {user?.credits_limit}</span></p>
+            <div className="rounded-2xl border border-[#E8E4DC] bg-white px-4 py-3 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-[#1A1A2E] text-white flex items-center justify-center">
+                <Layers size={18} />
+              </div>
+              <div className="text-xs">
+                <p className="text-[#9E9EA8] font-bold uppercase tracking-widest">Plan</p>
+                <p className="text-[#1A1A2E] font-bold uppercase">{user?.plan ?? 'trial'}</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── MERKEZ: AUDIT CENTER ── */}
-      <AuditCenter />
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* ── SOL KOLON: İstatistikler ve Geçmiş ── */}
-        <div className="lg:col-span-8 space-y-8">
-          {/* İstatistik Özetleri */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex items-center gap-6 group hover:border-orange-200 transition-all">
-              <div className="w-14 h-14 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <BarChart4 size={28} />
-              </div>
-              <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Toplam Üretim</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-slate-900">{totalGenerations}</span>
-                  <span className="text-xs font-bold text-green-600 flex items-center gap-0.5"><TrendingUp size={12} /> +12%</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex items-center gap-6 group hover:border-indigo-200 transition-all">
-              <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <LayoutDashboard size={28} />
-              </div>
-              <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Ortalama SEO</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-slate-900">{avgSeoScore ?? '—'}</span>
-                  <span className="text-xs font-bold text-slate-400">/ 100</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Son Üretimler Tablosu */}
-          <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
-            <div className="p-8 border-b border-slate-50 flex items-center justify-between">
-              <h3 className="text-xl font-bold text-slate-900 font-bricolage flex items-center gap-2">
-                <History className="text-orange-600" size={20} /> Son İşlemler
-              </h3>
-              <Link href="/app/library" className="text-xs font-bold text-orange-600 hover:underline flex items-center gap-1">
-                Tümünü Gör <ChevronRight size={14} />
-              </Link>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-slate-50/50">
-                  <tr className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                    <th className="px-8 py-4">Ürün</th>
-                    <th className="px-8 py-4">Tarih</th>
-                    <th className="px-8 py-4">Durum</th>
-                    <th className="px-8 py-4"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {recentGenerations.map((gen) => (
-                    <tr key={gen.id} className="group hover:bg-slate-50 transition-colors">
-                      <td className="px-8 py-5 text-sm font-bold text-slate-800">{gen.product_name}</td>
-                      <td className="px-8 py-5 text-xs text-slate-500 font-medium">{relativeDate(gen.created_at)}</td>
-                      <td className="px-8 py-5">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${gen.status === 'completed' ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
-                          }`}>
-                          {gen.status === 'completed' ? 'Tamamlandı' : 'Bekliyor'}
-                        </span>
-                      </td>
-                      <td className="px-8 py-5 text-right">
-                        <button className="p-2 text-slate-300 hover:text-orange-600 transition-colors">
-                          <ArrowUpRight size={18} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold text-[#1A1A2E] font-bricolage">Hızlı Eylemler</h3>
+          <div className="flex items-center gap-4">
+            <span className="text-xs font-semibold text-[#6B6B7B]">1 tıkla modül başlat</span>
           </div>
         </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          {quickActions.map((action) => (
+            <Link
+              key={action.title}
+              href={action.href}
+              className="group rounded-[24px] border border-[#E8E4DC] bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-[#FF6B35]/40"
+            >
+              <div className={`w-11 h-11 rounded-2xl flex items-center justify-center ${action.bg} ${action.color}`}>
+                <action.icon size={20} />
+              </div>
+              <h4 className="mt-4 text-base font-bold text-[#1A1A2E]">{action.title}</h4>
+              <p className="mt-1 text-sm text-[#6B6B7B] leading-relaxed">{action.description}</p>
+              <div className="mt-4 flex items-center text-sm font-semibold text-[#FF6B35]">
+                Başlat
+                <ArrowUpRight size={16} className="ml-1 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </div>
+            </Link>
+          ))}
 
-        {/* ── SAĞ KOLON: Kısayollar ve Bilgi ── */}
-        <div className="lg:col-span-4 space-y-8">
-          {/* Hızlı Kısayollar */}
-          <div className="bg-slate-900 rounded-[32px] p-8 text-white shadow-xl">
-            <h3 className="text-lg font-bold font-bricolage mb-6">Hızlı Erişim</h3>
-            <div className="grid grid-cols-1 gap-3">
-              {[
-                { label: 'İçerik Üret', href: '/app/generate', color: 'bg-white/10' },
-                { label: 'Görsel Stüdyosu', href: '/app/image-studio', color: 'bg-white/10' },
-                { label: 'Fiyat Analizi', href: '/app/pricing', color: 'bg-white/10' },
-                { label: 'Envanter', href: '/app/inventory', color: 'bg-white/10' }
-              ].map((link) => (
+          {/* 4. Slot: Kompakt Haber Akışı */}
+          <div className="rounded-[24px] border border-[#E8E4DC] bg-[#FAFAFD] p-5 shadow-sm flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-sm font-bold text-[#1A1A2E] flex items-center gap-2">
+                <Megaphone size={16} className="text-[#FF6B35]" /> Duyurular
+              </h4>
+              <span className="text-[10px] font-bold text-[#9E9EA8] uppercase tracking-widest">Yeni</span>
+            </div>
+            <div className="space-y-4 flex-1">
+              {infoBoxes.map((box, i) => (
                 <Link
-                  key={link.label}
-                  href={link.href}
-                  className={`w-full py-4 px-6 rounded-2xl ${link.color} hover:bg-orange-600 transition-all font-bold text-sm flex items-center justify-between group`}
+                  key={i}
+                  href={box.href}
+                  className="group block border-b border-[#E8E4DC] last:border-0 pb-3 last:pb-0"
                 >
-                  {link.label}
-                  <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[11px] font-bold text-[#1A1A2E] group-hover:text-[#FF6B35] transition-colors truncate">
+                      {box.title}
+                    </p>
+                    <ChevronRight size={12} className="text-[#9E9EA8] group-hover:text-[#FF6B35] transition-transform group-hover:translate-x-0.5" />
+                  </div>
+                  <p className="text-[10px] text-[#6B6B7B] line-clamp-1 mt-0.5">
+                    {box.description}
+                  </p>
                 </Link>
               ))}
             </div>
           </div>
+        </div>
+      </section>
 
-          {/* AI İpucu */}
-          <div className="bg-orange-50 border border-orange-100 rounded-[32px] p-8 space-y-4">
-            <div className="w-10 h-10 bg-orange-100 rounded-2xl flex items-center justify-center text-orange-600">
-              <TrendingUp size={20} />
+
+      <section className="rounded-[24px] border border-[#E8E4DC] bg-white p-4 md:p-6 shadow-sm">
+        <div className="mb-4 flex items-center gap-2 text-[#1A1A2E]">
+          <BadgeCheck size={18} className="text-[#FF6B35]" />
+          <h3 className="font-bold font-bricolage">Denetim Merkezi</h3>
+        </div>
+        <AuditCenter />
+      </section>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-8 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="rounded-[24px] border border-[#E8E4DC] bg-white p-5 shadow-sm flex items-center gap-4">
+              <div className="w-11 h-11 rounded-2xl bg-[#FFF2EC] text-[#FF6B35] flex items-center justify-center">
+                <BarChart3 size={22} />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-[#9E9EA8] uppercase tracking-widest">Toplam Üretim</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-bold text-[#1A1A2E]">{totalGenerations}</span>
+                  <span className="text-xs font-semibold text-green-600 flex items-center gap-1">
+                    <TrendingUp size={12} /> aktif
+                  </span>
+                </div>
+              </div>
             </div>
-            <h4 className="font-bold text-slate-900">E-Ticaret İpucu</h4>
-            <p className="text-sm text-slate-600 leading-relaxed italic">
-              "Amazon'da 'A+ Content' kullanımı dönüşüm oranlarını %15 artırıyor. Görsel stüdyomuzu kullanarak bu içerikleri optimize edebilirsiniz."
+            <div className="rounded-[24px] border border-[#E8E4DC] bg-white p-5 shadow-sm flex items-center gap-4">
+              <div className="w-11 h-11 rounded-2xl bg-[#FFF2EC] text-[#FF6B35] flex items-center justify-center">
+                <LayoutDashboard size={22} />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-[#9E9EA8] uppercase tracking-widest">Ortalama SEO</p>
+                <p className="text-2xl font-bold text-[#1A1A2E]">{avgSeoScore ?? '—'}<span className="text-sm text-[#9E9EA8]"> / 100</span></p>
+              </div>
+            </div>
+
+          </div>
+
+
+          <div className="rounded-[24px] border border-[#E8E4DC] bg-white shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-[#E8E4DC] flex items-center justify-between">
+              <h3 className="text-lg font-bold text-[#1A1A2E] font-bricolage flex items-center gap-2">
+                <History className="text-[#FF6B35]" size={18} /> Son İşlemler
+              </h3>
+              <Link href="/app/library" className="text-xs font-bold text-[#FF6B35] hover:underline flex items-center gap-1">
+                Tümünü Gör <ChevronRight size={14} />
+              </Link>
+            </div>
+
+            {recentGenerations.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-white">
+                    <tr className="text-[10px] font-bold text-[#9E9EA8] uppercase tracking-widest">
+                      <th className="px-6 py-4">Ürün</th>
+                      <th className="px-6 py-4">Tarih</th>
+                      <th className="px-6 py-4">Durum</th>
+                      <th className="px-6 py-4"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E8E4DC]">
+                    {recentGenerations.map((gen) => {
+                      const status = getStatusLabel(gen.status)
+                      return (
+                        <tr key={gen.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="px-6 py-4 text-sm font-semibold text-[#1A1A2E]">{gen.product_name}</td>
+                          <td className="px-6 py-4 text-xs text-[#6B6B7B] font-medium">{relativeDate(gen.created_at)}</td>
+                          <td className="px-6 py-4">
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold border ${status.className}`}>
+                              {status.label}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <button className="p-2 text-[#9E9EA8] hover:text-[#FF6B35] transition-colors" aria-label="İşlem detayını aç">
+                              <ArrowUpRight size={18} />
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="p-10 text-center">
+                <p className="text-sm font-semibold text-[#1A1A2E]">Henüz işlem geçmişi bulunmuyor.</p>
+                <p className="mt-1 text-xs text-[#6B6B7B]">İlk içeriğini ürettiğinde burada listelenecek.</p>
+              </div>
+            )}
+          </div>
+          <section className="relative overflow-hidden bg-[#FF6B35] rounded-[20px] h-11 flex items-center shadow-sm">
+            <div className="absolute left-0 top-0 bottom-0 px-4 bg-[#FF6B35] z-10 flex items-center border-r border-white/10">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                <span className="text-[10px] font-bold text-white uppercase tracking-widest">Canlı Akış</span>
+              </div>
+            </div>
+            <NewsTicker items={infoBoxes.map(({ icon, ...rest }) => rest)} />
+          </section>
+
+        </div>
+
+
+        <div className="lg:col-span-4 space-y-4">
+          <div className="rounded-[24px] border border-[#E8E4DC] bg-white p-6 shadow-sm">
+            <h3 className="text-lg font-bold font-bricolage text-[#1A1A2E]">Performans Özeti</h3>
+            <div className="mt-5 space-y-4">
+              <div className="rounded-2xl border border-[#E8E4DC] bg-[#FAFAFD] p-4">
+                <p className="text-[11px] uppercase tracking-widest text-[#9E9EA8] font-bold">Bu Ay Üretim</p>
+                <p className="mt-1 text-2xl font-bold text-[#1A1A2E]">{monthlyGenerations}</p>
+              </div>
+              <div className="rounded-2xl border border-[#E8E4DC] bg-[#FAFAFD] p-4">
+                <p className="text-[11px] uppercase tracking-widest text-[#9E9EA8] font-bold">Ortalama SEO</p>
+                <p className="mt-1 text-2xl font-bold text-[#1A1A2E]">{avgSeoScore ?? '—'}</p>
+              </div>
+            </div>
+            <Link
+              href="/app/settings/billing"
+              className="mt-5 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#FF6B35] px-4 py-3 text-sm font-bold transition-colors hover:bg-[#ff5c22]"
+            >
+              Kredileri Yönet
+              <ChevronRight size={16} />
+            </Link>
+          </div>
+
+          <div className="rounded-[24px] border border-[#E8E4DC] bg-white p-6 shadow-sm">
+            <h4 className="font-bold text-[#1A1A2E]">E-Ticaret İpucu</h4>
+            <p className="mt-3 text-sm leading-relaxed text-[#6B6B7B]">
+              Dönüşüm oranlarını artırmak için analiz skorunda 70 altı kalan ürünleri önce
+              <span className="font-semibold text-[#1A1A2E]"> Analizör</span> ile güncelle, ardından
+              <span className="font-semibold text-[#1A1A2E]"> Dönüştürücü</span> ile kanal bazlı optimize et.
             </p>
+            <Link href="/app/analyzer" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-[#FF6B35] hover:underline">
+              Analizöre git
+              <ChevronRight size={14} />
+            </Link>
+          </div>
+
+          <div className="rounded-[24px] border border-[#E8E4DC] bg-white p-6 shadow-sm">
+            <h4 className="font-bold text-[#1A1A2E]">Kısayol</h4>
+            <div className="mt-3 space-y-2">
+              {[
+                { label: 'İçerik Üretici', href: '/app/generate' },
+                { label: 'Fiyat Analizi', href: '/app/pricing' },
+                { label: 'Envanter', href: '/app/inventory' },
+              ].map((link) => (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className="flex items-center justify-between rounded-xl border border-[#E8E4DC] px-4 py-3 text-sm font-semibold text-[#1A1A2E] transition-colors hover:border-[#FF6B35]/40 hover:bg-[#FFF2EC]"
+                >
+                  {link.label}
+                  <ChevronRight size={15} className="text-[#9E9EA8]" />
+                </Link>
+              ))}
+            </div>
+
           </div>
         </div>
       </div>

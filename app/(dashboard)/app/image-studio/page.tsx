@@ -118,7 +118,7 @@ export default function ImageStudioPage() {
   }
 
   return (
-    <div className="bg-slate-50 min-h-screen pb-12">
+    <div className="bg-white">
       <div className="border-b border-[#E8E4DC] bg-white px-6 py-5">
         <h1 className="text-2xl font-bold text-[#1A1A2E]" style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}>
           Görsel Stüdyosu (Image Studio)

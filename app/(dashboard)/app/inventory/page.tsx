@@ -80,18 +80,20 @@ export default function InventoryPage() {
   }
 
   return (
-    <div className="max-w-[1200px] mx-auto space-y-8 pb-20">
-      {/* ── Başlık Bölümü ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="bg-white">
+      {/* ── Header ── */}
+      <div className="border-b border-[#E8E4DC] bg-white px-6 py-5 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-[#1A1A2E] font-bricolage">Envanter Stratejisti</h1>
-          <p className="text-[#6B6B7B] mt-1">AI destekli stok tahminleme ve akıllı ikmal yönetimi.</p>
+          <h1 className="text-2xl font-bold text-[#1A1A2E] font-bricolage">Envanter Stratejisti</h1>
+          <p className="text-[#6B6B7B] text-sm mt-0.5">AI destekli stok tahminleme ve akıllı ikmal yönetimi.</p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-2xl">
-          <Zap className="w-4 h-4 text-indigo-500 fill-indigo-500" />
-          <span className="text-sm font-semibold text-indigo-700">Sprint 5: Aktif</span>
+        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-indigo-50 border border-indigo-100 rounded-xl">
+          <Zap className="w-3.5 h-3.5 text-indigo-500 fill-indigo-500" />
+          <span className="text-[11px] font-bold text-indigo-700 uppercase tracking-wider">Sprint 5: Aktif</span>
         </div>
       </div>
+
+      <div className="px-6 py-8 space-y-8">
 
       {/* ── Giriş Formu ── */}
       <section className="bg-white/70 backdrop-blur-xl border border-[#E8E4DC] rounded-[32px] p-8 shadow-sm">
@@ -287,6 +289,7 @@ export default function InventoryPage() {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
     </div>
   )
 }

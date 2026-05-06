@@ -85,18 +85,20 @@ export default function PricingPage() {
   }
 
   return (
-    <div className="max-w-[1200px] mx-auto space-y-8 pb-20">
-      {/* ── Başlık Bölümü ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="bg-white">
+      {/* ── Header ── */}
+      <div className="border-b border-[#E8E4DC] bg-white px-6 py-5 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-[#1A1A2E] font-bricolage">Fiyat Stüdyosu</h1>
-          <p className="text-[#6B6B7B] mt-1">Rakip fiyatlarını analiz edin, marjınızı koruyun ve optimal fiyatı bulun.</p>
+          <h1 className="text-2xl font-bold text-[#1A1A2E] font-bricolage">Fiyat Stüdyosu</h1>
+          <p className="text-[#6B6B7B] text-sm mt-0.5">Rakip fiyatlarını analiz edin, marjınızı koruyun ve optimal fiyatı bulun.</p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-100 rounded-2xl">
-          <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
-          <span className="text-sm font-semibold text-amber-700">Sprint 4: Yayında</span>
+        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-100 rounded-xl">
+          <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+          <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">Sprint 4: Yayında</span>
         </div>
       </div>
+
+      <div className="px-6 py-8 space-y-8">
 
       {/* ── Giriş Formu ── */}
       <section className="bg-white/70 backdrop-blur-xl border border-[#E8E4DC] rounded-[32px] p-8 shadow-sm">
@@ -172,7 +174,7 @@ export default function PricingPage() {
             <div className="w-16 h-16 bg-[#F8F7F4] rounded-full flex items-center justify-center mx-auto">
               <BarChart3 className="w-8 h-8 text-[#9E9EA8]" />
             </div>
-            <div className="max-w-md mx-auto">
+            <div className="p-6 md:p-8 space-y-8">
               <h3 className="text-lg font-bold text-[#1A1A2E]">Analize Hazır</h3>
               <p className="text-sm text-[#6B6B7B]">
                 Ürün bilgilerinizi yukarıdaki forma girerek pazar analizini başlatın. Rakip fiyatlarını ve karlılığınızı anında görün.
@@ -344,6 +346,7 @@ export default function PricingPage() {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
     </div>
   )
 }

@@ -72,29 +72,32 @@ export default function AuditsLibraryPage() {
   }
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="bg-white min-h-screen">
+      {/* ── Header ── */}
+      <div className="border-b border-[#E8E4DC] bg-white px-6 py-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 font-bricolage">Denetim Kütüphanesi</h1>
-          <p className="text-slate-500 text-sm">Geçmişte yaptığınız tüm 360° ürün denetimleri ve performans raporları.</p>
+          <h1 className="text-2xl font-bold text-[#1A1A2E] font-bricolage">Denetim Kütüphanesi</h1>
+          <p className="text-[#6B6B7B] text-sm mt-0.5">Geçmişte yaptığınız tüm 360° ürün denetimleri ve performans raporları.</p>
         </div>
+        
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9E9EA8]" />
             <input 
               type="text"
               placeholder="Ürün ara..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-500 transition-all outline-none w-64"
+              className="pl-10 pr-4 py-2 bg-white border border-[#E8E4DC] rounded-xl text-sm focus:outline-none focus:border-[#FF6B35] focus:ring-2 focus:ring-[#FF6B35]/10 transition-all w-full md:w-64"
             />
           </div>
-          <button className="p-2 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors">
+          <button className="p-2 bg-white border border-[#E8E4DC] rounded-xl text-[#6B6B7B] hover:bg-[#FAFAFD] hover:border-[#FF6B35]/40 transition-colors">
             <Filter size={18} />
           </button>
         </div>
       </div>
+
+      <div className="px-6 py-8 space-y-8">
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -208,6 +211,7 @@ export default function AuditsLibraryPage() {
           result={selectedAudit.formattedResult}
         />
       )}
+    </div>
     </div>
   )
 }

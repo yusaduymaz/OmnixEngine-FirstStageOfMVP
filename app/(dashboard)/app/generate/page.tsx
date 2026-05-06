@@ -384,7 +384,7 @@ export default function GeneratePage() {
   }
 
   return (
-    <div className="bg-slate-50 min-h-screen">
+    <div className="bg-white">
       {/* Sayfa başlığı */}
       <div className="border-b border-[#E8E4DC] bg-white px-6 py-5">
         <h1

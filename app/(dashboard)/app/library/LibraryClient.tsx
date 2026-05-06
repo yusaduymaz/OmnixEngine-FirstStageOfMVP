@@ -105,10 +105,10 @@ export default function LibraryClient({
   const isEmpty = visibleGenerations.length === 0 && visibleAnalyses.length === 0
 
   return (
-    <div className="min-h-screen bg-[#F8F7F4]">
+    <div className="min-h-screen bg-white">
       {/* Sayfa başlığı */}
       <div className="border-b border-[#E8E4DC] bg-white px-6 py-5">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
+        <div className="flex items-center justify-between">
           <div>
             <h1
               className="text-2xl font-bold text-[#1A1A2E]"
@@ -132,7 +132,7 @@ export default function LibraryClient({
 
       {/* Sekmeler */}
       <div className="border-b border-[#E8E4DC] bg-white px-6">
-        <div className="max-w-6xl mx-auto flex gap-1">
+        <div className="flex gap-1">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -160,7 +160,7 @@ export default function LibraryClient({
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="px-6 py-8">
         {isEmpty ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="w-16 h-16 rounded-2xl bg-white border border-[#E8E4DC] flex items-center justify-center mb-4 shadow-sm">

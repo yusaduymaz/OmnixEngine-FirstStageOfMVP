@@ -168,10 +168,10 @@ function Sidebar() {
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-white">
       <Sidebar />
       {/* İçerik alanı — sidebar genişliği kadar sola kayar */}
-      <div style={{ marginLeft: '16rem' }}>
+      <div className="min-h-screen bg-white" style={{ marginLeft: '16rem' }}>
         {children}
       </div>
     </div>
