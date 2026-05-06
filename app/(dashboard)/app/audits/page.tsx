@@ -22,6 +22,7 @@ export default function AuditsLibraryPage() {
   const [audits, setAudits] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   
   // Modal State
   const [selectedAudit, setSelectedAudit] = useState<any>(null)
@@ -33,11 +34,20 @@ export default function AuditsLibraryPage() {
 
   const fetchAudits = async () => {
     try {
-      const res = await fetch('/api/audits')
+      setErrorMessage(null)
+      const res = await fetch('/api/audits', { cache: 'no-store' })
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null)
+        const message = errorData?.error || 'Denetim raporları yüklenemedi.'
+        throw new Error(message)
+      }
       const data = await res.json()
       setAudits(data.audits || [])
     } catch (err) {
       console.error('Denetimler yüklenirken hata:', err)
+      const message = err instanceof Error ? err.message : 'Denetim raporları yüklenemedi.'
+      setErrorMessage(message)
+      setAudits([])
     } finally {
       setLoading(false)
     }
@@ -110,6 +120,11 @@ export default function AuditsLibraryPage() {
           <div className="p-20 flex flex-col items-center justify-center space-y-4">
             <Loader2 className="w-10 h-10 text-orange-500 animate-spin" />
             <p className="text-slate-500 font-medium">Denetimler yükleniyor...</p>
+          </div>
+        ) : errorMessage ? (
+          <div className="p-12 text-center space-y-3">
+            <p className="text-slate-900 font-bold">Denetimler yüklenemedi.</p>
+            <p className="text-sm text-slate-500">{errorMessage}</p>
           </div>
         ) : filteredAudits.length > 0 ? (
           <div className="divide-y divide-slate-50">
