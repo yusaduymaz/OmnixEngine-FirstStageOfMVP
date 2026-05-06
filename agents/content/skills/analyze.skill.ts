@@ -4,8 +4,8 @@
 import { currentUser } from '@clerk/nextjs/server'
 import { getSupabaseAdmin } from '@/lib/supabase/server'
 import { generateObject } from 'ai'
-import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAI } from '@ai-sdk/openai'
+import Groq from 'groq-sdk'
 import { z } from 'zod'
 import * as cheerio from 'cheerio'
 import type { AnalyzeSkillInput, AnalysisResult } from '../types/analyze.types'
@@ -75,7 +75,7 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
   // 2. Scraping
   console.log(`[Analyze] URL kazınıyor: ${input.url}`)
   const scrapedData = await safeScrapeUrl(input.url)
-  
+
   if (!scrapedData.title && !scrapedData.description && !scrapedData.content) {
     throw new AnalyzeSkillError('Sayfadan içerik çıkarılamadı. Boş sayfa olabilir.', 400)
   }
@@ -101,21 +101,31 @@ Lütfen bu içeriği aşağıdaki kriterlere göre incele ve her biri için puan
 4. Platform Kurallarına Uygunluk (Seçilen platformların yasaklı kelimeleri, uzunluk sınırları vb.)
 
 Ayrıca genel bir SEO skoru (0-100) hesapla.
+
+YANIT FORMATI (Sadece JSON):
+{
+  "overallScore": 85,
+  "criteriaScores": {
+    "titleQuality": { "score": 90, "status": "pass", "message": "...", "suggestion": "...", "currentValue": "..." },
+    "descriptionDepth": { "score": 70, "status": "warn", "message": "...", "suggestion": "...", "currentValue": "..." },
+    "keywordDensity": { "score": 80, "status": "pass", "message": "...", "suggestion": "..." },
+    "platformRules": { "score": 95, "status": "pass", "message": "...", "suggestion": "..." }
+  }
+}
 `
 
   // 4. AI Çağrısı (Zod schema ile structure generation)
-  const geminiKey = process.env.GOOGLE_GENERATION_AI_API_KEY
-  const anthropicKey = process.env.ANTHROPIC_API_KEY
-  const nvidiaKey = process.env.NVIDIA_API_KEY
-  
-  if (!geminiKey && !anthropicKey && !nvidiaKey) {
+  const openrouterKey = process.env.OPENROUTER_API_KEY
+  const groqKey = process.env.GROQ_API_KEY
+
+  if (!openrouterKey && !groqKey) {
     throw new AnalyzeSkillError('AI servisi yapılandırılamadı (Key eksik).', 500)
   }
-  
+
   let resultObject: any = null
   let tokensUsed = 0
-  let modelUsed = 'abacusai/dracarys-llama-3.1-70b-instruct'
-  
+  let modelUsed = 'openrouter/free'
+
   const schema = z.object({
     overallScore: z.number().min(0).max(100),
     criteriaScores: z.object({
@@ -149,13 +159,13 @@ Ayrıca genel bir SEO skoru (0-100) hesapla.
   })
 
   try {
-    if (!nvidiaKey) throw new Error('Nvidia key missing, skip to Gemini')
+    if (!openrouterKey) throw new Error('OpenRouter key missing, skip to Groq')
 
-    console.log('[Analyze] Nvidia API çağrılıyor...')
-    const nvidia = createOpenAI({ apiKey: nvidiaKey, baseURL: 'https://integrate.api.nvidia.com/v1' })
+    console.log('[Analyze] OpenRouter API çağrılıyor...')
+    const openrouter = createOpenAI({ apiKey: openrouterKey, baseURL: 'https://openrouter.ai/api/v1' })
 
     const { object, usage } = await generateObject({
-      model: nvidia('abacusai/dracarys-llama-3.1-70b-instruct'),
+      model: openrouter('openrouter/free'),
       schema: schema,
       system: systemPrompt,
       prompt: prompt,
@@ -163,89 +173,51 @@ Ayrıca genel bir SEO skoru (0-100) hesapla.
     })
     resultObject = object
     tokensUsed = ((usage as any).promptTokens ?? (usage as any).inputTokens ?? 0) + ((usage as any).completionTokens ?? (usage as any).outputTokens ?? 0)
-    console.log('[Analyze] Analiz tamamlandı (Nvidia), skor:', resultObject.overallScore)
-  } catch (nvidiaErr: any) {
-    console.warn('[Analyze] Nvidia error, trying Gemini 2.5 Flash...', nvidiaErr?.message || nvidiaErr)
-    
+    console.log('[Analyze] Analiz tamamlandı (OpenRouter), skor:', resultObject.overallScore)
+  } catch (openrouterErr: any) {
+    console.warn('[Analyze] OpenRouter error, trying Groq fallback...', openrouterErr?.message || openrouterErr)
+
     try {
-      if (!geminiKey) throw new Error('Gemini key missing, skip to fallback')
-      
-      console.log('[Analyze] Gemini 2.5 Flash API çağrılıyor...')
-    const google = createGoogleGenerativeAI({ apiKey: geminiKey })
-    
-    try {
-      const { object, usage } = await generateObject({
-        model: google('gemini-2.5-flash'),
-        schema: schema,
-        system: systemPrompt,
-        prompt: prompt,
-        temperature: 0.3
-      })
-      resultObject = object
-      tokensUsed = ((usage as any).promptTokens ?? (usage as any).inputTokens ?? 0) + ((usage as any).completionTokens ?? (usage as any).outputTokens ?? 0)
-      console.log('[Analyze] Analiz tamamlandı (Gemini 2.5 Flash), skor:', resultObject.overallScore)
-    } catch (geminiFlashErr: any) {
-      console.warn('[Analyze] Gemini 2.5 Flash error, trying Gemini 2.0 Flash...', geminiFlashErr?.message || geminiFlashErr)
-      
-      const { object, usage } = await generateObject({
-        model: google('gemini-2.0-flash'),
-        schema: schema,
-        system: systemPrompt,
-        prompt: prompt,
-        temperature: 0.3
-      })
-      resultObject = object
-      tokensUsed = ((usage as any).promptTokens ?? (usage as any).inputTokens ?? 0) + ((usage as any).completionTokens ?? (usage as any).outputTokens ?? 0)
-      modelUsed = 'gemini-2.0-flash'
-      console.log('[Analyze] Analiz tamamlandı (Gemini 2.0 Flash), skor:', resultObject.overallScore)
-    }
-  } catch (err: any) {
-    console.warn('[Analyze] Nvidia and Gemini models failed, falling back to Claude:', err?.message || err)
-    
-    // Fallback to Claude
-    try {
-      if (!anthropicKey) throw new Error('Anthropic key missing for fallback')
-      
-      console.log('[Analyze] Claude 3.5 Sonnet API çağrılıyor (Fallback)...')
-      const anthropic = require('@ai-sdk/anthropic').createAnthropic({ apiKey: anthropicKey })
-      
-      try {
-        const { object, usage } = await generateObject({
-          model: anthropic('claude-3-5-sonnet-latest'),
-          schema: schema,
-          system: systemPrompt,
-          prompt: prompt,
-          temperature: 0.3
-        })
-        resultObject = object
-        tokensUsed = ((usage as any).promptTokens ?? (usage as any).inputTokens ?? 0) + ((usage as any).completionTokens ?? (usage as any).outputTokens ?? 0)
-        modelUsed = 'claude-3-5-sonnet-latest'
-        console.log('[Analyze] Analiz tamamlandı (Claude 3.5 Sonnet), skor:', resultObject.overallScore)
-      } catch (claudeSonnetErr: any) {
-        console.warn('[Analyze] Claude 3.5 Sonnet error, trying Haiku...', claudeSonnetErr?.message || claudeSonnetErr)
-        
-        const { object, usage } = await generateObject({
-          model: anthropic('claude-3-haiku-20240307'),
-          schema: schema,
-          system: systemPrompt,
-          prompt: prompt,
-          temperature: 0.3
-        })
-        resultObject = object
-        tokensUsed = ((usage as any).promptTokens ?? (usage as any).inputTokens ?? 0) + ((usage as any).completionTokens ?? (usage as any).outputTokens ?? 0)
-        modelUsed = 'claude-3-haiku-20240307'
-        console.log('[Analyze] Analiz tamamlandı (Claude Haiku), skor:', resultObject.overallScore)
+      if (!groqKey) {
+        throw new AnalyzeSkillError('Groq API anahtarı yapılandırılmadı.', 500)
       }
-    } catch (fallbackErr: any) {
-      console.error('[Analyze] Fallback AI generation error:', fallbackErr)
-      const errString = fallbackErr?.message || String(fallbackErr)
+
+      const groq = new Groq({ apiKey: groqKey })
+      const response = await groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: 1500,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.3,
+      })
+
+      const responseContent = response.choices[0]?.message?.content
+      if (!responseContent) {
+        throw new Error('Groq yanıttı boş.')
+      }
+
+      // JSON çıkarmayı dene
+      const jsonMatch = responseContent.match(/\{[\s\S]*\}/)
+      if (!jsonMatch) {
+        throw new Error('Groq yanıtında JSON bulunamadı.')
+      }
+
+      const parsed = JSON.parse(jsonMatch[0])
+      resultObject = parsed
+      tokensUsed = response.usage?.total_tokens ?? 0
+      modelUsed = 'llama-3.3-70b-versatile (Groq)'
+      console.log('[Analyze] Analiz tamamlandı (Groq Llama), skor:', resultObject.overallScore)
+    } catch (groqErr: any) {
+      console.warn('[Analyze] Groq fallback error:', groqErr?.message || groqErr)
+      const errString = groqErr?.message || String(groqErr)
       if (errString.includes('credit balance is too low') || errString.includes('quota')) {
-         throw new AnalyzeSkillError('Yapay zeka API krediniz yetersiz veya kotalarınız dolmuş. Lütfen API anahtarlarınızın limitlerini kontrol edin.', 402)
+        throw new AnalyzeSkillError('Yapay zeka API krediniz yetersiz veya kotalarınız dolmuş. Lütfen API anahtarlarınızın limitlerini kontrol edin.', 402)
       }
-      throw new AnalyzeSkillError('İçerik analizi sırasında tüm AI servisleri (Nvidia, Gemini ve Claude) yanıt vermedi.', 500)
+      throw new AnalyzeSkillError('İçerik analizi sırasında tüm AI servisleri (OpenRouter ve Groq) yanıt vermedi.', 500)
     }
   }
-}
 
   // 5. Veritabanı Kayıt ve Kredi Düşümü (Asenkron)
   const finalResult: AnalysisResult = {

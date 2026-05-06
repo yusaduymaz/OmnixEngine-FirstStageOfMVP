@@ -18,6 +18,7 @@ import { currentUser } from '@clerk/nextjs/server'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAI } from '@ai-sdk/openai'
 import { streamText } from 'ai'
+import Groq from 'groq-sdk'
 import { buildSystemPrompt, buildUserMessage, type Tone, type PlatformId } from '@/prompts/system'
 import { getSupabaseAdmin } from '@/lib/supabase/server'
 import type { GenerateSkillInput, SupabaseUserRow, ParsedTitle, ExtractedJSON } from '../types/generate.types'
@@ -153,44 +154,44 @@ async function resolveUser(
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Plan A: Nvidia ile streaming içerik üretimi.
+ * Plan A: OpenRouter ile streaming içerik üretimi.
  */
-async function tryNvidiaStream(
+async function tryOpenRouterStream(
   systemPrompt: string,
   userMessage: string,
   controller: ReadableStreamDefaultController,
   encoder: TextEncoder,
   startTime: number,
 ): Promise<{ fullText: string; inputTokens: number; outputTokens: number; modelUsed: string } | null> {
-  const nvidiaKey = process.env.NVIDIA_API_KEY
-  if (!nvidiaKey) return null
+  const openrouterKey = process.env.OPENROUTER_API_KEY
+  if (!openrouterKey) return null
 
   try {
-    console.log('[Generate] Plan A: Nvidia deneniyor...')
-    const nvidiaProvider = createOpenAI({
-      apiKey: nvidiaKey,
-      baseURL: 'https://integrate.api.nvidia.com/v1',
+    console.log('[Generate] Plan A: OpenRouter deneniyor...')
+    const openrouterProvider = createOpenAI({
+      apiKey: openrouterKey,
+      baseURL: 'https://openrouter.ai/api/v1',
     })
 
     let fullText = ''
-    const nvidiaResult = streamText({
-      model: nvidiaProvider('abacusai/dracarys-llama-3.1-70b-instruct'),
+    const openrouterResult = streamText({
+      model: openrouterProvider('openrouter/free'),
       system: systemPrompt,
       messages: [{ role: 'user', content: userMessage }],
       temperature: 0.7,
     })
 
-    for await (const chunk of nvidiaResult.textStream) {
+    for await (const chunk of openrouterResult.textStream) {
       fullText += chunk
       controller.enqueue(encoder.encode('.'))
     }
 
-    const usage = await nvidiaResult.usage
+    const usage = await openrouterResult.usage
     const inputTokens = (usage as any)?.promptTokens ?? (usage as any)?.inputTokens ?? 0
     const outputTokens = (usage as any)?.completionTokens ?? (usage as any)?.outputTokens ?? 0
-    const modelUsed = 'abacusai/dracarys-llama-3.1-70b-instruct (Nvidia)'
+    const modelUsed = 'openrouter/free (OpenRouter)'
 
-    console.log('[Generate] Nvidia başarılı:', {
+    console.log('[Generate] OpenRouter başarılı:', {
       inputTokens,
       outputTokens,
       textLen: fullText.length,
@@ -198,140 +199,74 @@ async function tryNvidiaStream(
     })
 
     return { fullText, inputTokens, outputTokens, modelUsed }
-  } catch (nvidiaErr) {
+  } catch (err) {
     console.warn(
-      '[Generate] Nvidia başarısız, Claude/Gemini\'ye geçiliyor:',
-      nvidiaErr instanceof Error ? nvidiaErr.message : nvidiaErr
+      '[Generate] OpenRouter başarısız, Groq\'a geçiliyor:',
+      err instanceof Error ? err.message : err
     )
     return null
   }
 }
 
 /**
- * Plan A: Claude (Anthropic) ile streaming içerik üretimi.
+ * Plan D: Groq ile streaming içerik üretimi (ücretsiz alternatif)
  * @returns { fullText, inputTokens, outputTokens, modelUsed } — başarılıysa
- * @returns null — başarısızsa (Gemini'ye fallback tetiklenir)
+ * @throws {Error} Groq başarısızsa
  */
-async function tryClaudeStream(
-  systemPrompt: string,
-  userMessage: string,
-  controller: ReadableStreamDefaultController,
-  encoder: TextEncoder,
-  startTime: number,
-): Promise<{ fullText: string; inputTokens: number; outputTokens: number; modelUsed: string } | null> {
-  if (!process.env.ANTHROPIC_API_KEY) return null
-
-  try {
-    console.log('[Generate] Plan B: Claude deneniyor...')
-    const Anthropic = (await import('@anthropic-ai/sdk')).default
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-
-    let fullText = ''
-    const anthropicStream = await client.messages.stream({
-      model: 'claude-sonnet-4-5',
-      max_tokens: 22000,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userMessage }],
-    })
-
-    for await (const chunk of anthropicStream) {
-      if (
-        chunk.type === 'content_block_delta' &&
-        chunk.delta.type === 'text_delta'
-      ) {
-        fullText += chunk.delta.text
-        // Canlı ilerleme: nokta ping (ham metin değil, kesilmiş JSON önle)
-        controller.enqueue(encoder.encode('.'))
-      }
-    }
-
-    const final = await anthropicStream.finalMessage()
-    const inputTokens = final.usage.input_tokens
-    const outputTokens = final.usage.output_tokens
-    const modelUsed = 'claude-sonnet-4-5'
-
-    console.log('[Generate] Claude başarılı:', {
-      inputTokens,
-      outputTokens,
-      textLen: fullText.length,
-      ms: Date.now() - startTime,
-    })
-
-    return { fullText, inputTokens, outputTokens, modelUsed }
-  } catch (claudeErr) {
-    console.warn(
-      '[Generate] Claude başarısız, Gemini\'ye geçiliyor:',
-      claudeErr instanceof Error ? claudeErr.message : claudeErr
-    )
-    return null
-  }
-}
-
-/**
- * Plan B: Gemini ile streaming içerik üretimi.
- * Birden fazla model sırasıyla denenir (fallback chain).
- * @returns { fullText, inputTokens, outputTokens, modelUsed } — başarılıysa
- * @throws {Error} Tüm modeller başarısız olursa
- */
-async function tryGeminiStream(
+async function tryGroqStream(
   systemPrompt: string,
   userMessage: string,
   controller: ReadableStreamDefaultController,
   encoder: TextEncoder,
   startTime: number,
 ): Promise<{ fullText: string; inputTokens: number; outputTokens: number; modelUsed: string }> {
-  const geminiKey = process.env.GOOGLE_GENERATION_AI_API_KEY
-  if (!geminiKey) {
-    throw new Error('Gemini API anahtarı eksik.')
+  const groqKey = process.env.GROQ_API_KEY
+  if (!groqKey) {
+    throw new Error('Groq API anahtarı eksik.')
   }
 
-  console.log('[Generate] Plan C: Gemini ile üretim başlıyor...')
-  const geminiProvider = createGoogleGenerativeAI({ apiKey: geminiKey })
+  console.log('[Generate] Plan D: Groq deneniyor...')
+  const groq = new Groq({ apiKey: groqKey })
 
-  // Bu API key'inde çalışan modeller (ListModels ile doğrulandı)
-  const GEMINI_MODELS = [
-    'gemini-2.5-flash',   // En iyi: hızlı + kaliteli
-    'gemini-2.0-flash',   // Yedek 1
-    'gemini-2.5-pro',     // Yedek 2 (daha yavaş ama güçlü)
-  ]
+  let fullText = ''
+  try {
+    const response = await groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      max_tokens: 22000,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage }
+      ],
+      temperature: 0.7,
+      stream: true,
+    })
 
-  for (const modelName of GEMINI_MODELS) {
-    try {
-      console.log(`[Generate] Gemini model deneniyor: ${modelName}`)
-
-      let fullText = ''
-      const geminiResult = streamText({
-        model: geminiProvider(modelName),
-        system: systemPrompt,
-        messages: [{ role: 'user', content: userMessage }],
-        maxOutputTokens: 25192,  // Türkçe içerik için yeterli alan
-        temperature: 0.7,
-      })
-
-      // Ham chunk'ları topla — kesilmiş JSON'ı önlemek için
-      // frontend'e sadece tamamlanınca __RESULT__ gönderiliyor
-      for await (const chunk of geminiResult.textStream) {
-        fullText += chunk
-        // Canlı ilerleme: sadece progress ping gönder (içerik değil)
+    // Stream'den chunk'ları oku
+    for await (const chunk of response) {
+      const content = chunk.choices[0]?.delta?.content
+      if (content) {
+        fullText += content
+        // Canlı progress
         controller.enqueue(encoder.encode('.'))
       }
-
-      const usage = await geminiResult.usage
-      const inputTokens = usage?.inputTokens ?? 0
-      const outputTokens = usage?.outputTokens ?? 0
-
-      console.log(`[Generate] ${modelName} başarılı:`, {
-        inputTokens, outputTokens, textLen: fullText.length, ms: Date.now() - startTime,
-      })
-
-      return { fullText, inputTokens, outputTokens, modelUsed: modelName }
-    } catch (modelErr) {
-      console.warn(`[Generate] ${modelName} başarısız:`, modelErr instanceof Error ? modelErr.message : modelErr)
-      // Bu modelin kısmi çıktısını sıfırla, sonraki modeli dene
     }
-  }
 
-  throw new Error('Tüm Gemini modelleri başarısız oldu.')
+    const inputTokens = 0  // Groq SDK streaming modu tokenları döndürmüyor, estimate yap
+    const outputTokens = Math.ceil(fullText.length / 4)
+
+    console.log('[Generate] Groq başarılı:', {
+      textLen: fullText.length,
+      ms: Date.now() - startTime,
+    })
+
+    return { fullText, inputTokens, outputTokens, modelUsed: 'llama-3.3-70b-versatile (Groq)' }
+  } catch (groqErr) {
+    console.warn(
+      '[Generate] Groq başarısız:',
+      groqErr instanceof Error ? groqErr.message : groqErr
+    )
+    throw groqErr
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -475,50 +410,58 @@ export async function generateSkill(input: GenerateSkillInput): Promise<Readable
       let outputTokens = 0
 
       // ══════════════════════════════════════════════════════
-      // PLAN A: Nvidia
+      // PLAN A: OpenRouter
       // ══════════════════════════════════════════════════════
-      const nvidiaResult = await tryNvidiaStream(
-        systemPrompt,
-        userMessage,
-        controller,
-        encoder,
-        startTime,
-      )
-
-      if (nvidiaResult) {
-        fullText = nvidiaResult.fullText
-        inputTokens = nvidiaResult.inputTokens
-        outputTokens = nvidiaResult.outputTokens
-        modelUsed = nvidiaResult.modelUsed
-      }
-
-      // ══════════════════════════════════════════════════════
-      // PLAN B: Claude (Anthropic)
-      // ══════════════════════════════════════════════════════
-      let claudeResult = null
-      if (!nvidiaResult) {
-        claudeResult = await tryClaudeStream(
+      let openrouterResult = null
+      try {
+        console.log('[Generate] Plan A: OpenRouter deneniyor...')
+        openrouterResult = await tryOpenRouterStream(
           systemPrompt,
           userMessage,
           controller,
           encoder,
           startTime,
         )
+        if (openrouterResult) {
+          fullText = openrouterResult.fullText
+          inputTokens = openrouterResult.inputTokens
+          outputTokens = openrouterResult.outputTokens
+          modelUsed = openrouterResult.modelUsed
+        }
+      } catch (err) {
+        console.warn('[Generate] OpenRouter başarısız:', err instanceof Error ? err.message : err)
+      }
 
-        if (claudeResult) {
-          fullText = claudeResult.fullText
-          inputTokens = claudeResult.inputTokens
-          outputTokens = claudeResult.outputTokens
-          modelUsed = claudeResult.modelUsed
+      // ══════════════════════════════════════════════════════
+      // PLAN B: Groq (OpenRouter başarısızsa)
+      // ══════════════════════════════════════════════════════
+      let groqResult = null
+      if (!openrouterResult) {
+        try {
+          groqResult = await tryGroqStream(
+            systemPrompt,
+            userMessage,
+            controller,
+            encoder,
+            startTime,
+          )
+          if (groqResult) {
+            fullText = groqResult.fullText
+            inputTokens = groqResult.inputTokens
+            outputTokens = groqResult.outputTokens
+            modelUsed = groqResult.modelUsed
+          }
+        } catch (groqErr) {
+          console.warn('[Generate] Groq başarısız:', groqErr instanceof Error ? groqErr.message : groqErr)
         }
       }
 
       // ══════════════════════════════════════════════════════
-      // PLAN C: Gemini (Claude ve Nvidia başarısızsa)
+      // Hata Kontrolü — Tüm model başarısızsa
       // ══════════════════════════════════════════════════════
-      if (!nvidiaResult && !claudeResult) {
-        const geminiKey = process.env.GOOGLE_GENERATION_AI_API_KEY
-        if (!geminiKey && !process.env.ANTHROPIC_API_KEY && !process.env.NVIDIA_API_KEY) {
+      if (!fullText) {
+        const openrouterKey = process.env.OPENROUTER_API_KEY
+        if (!openrouterKey && !process.env.GROQ_API_KEY) {
           console.error('[Generate] Tüm model anahtarları eksik!')
           controller.enqueue(
             encoder.encode('__ERROR__:İçerik üretim servisi şu an kullanılamıyor.')
@@ -527,29 +470,14 @@ export async function generateSkill(input: GenerateSkillInput): Promise<Readable
           return
         }
 
-        try {
-          const geminiResult = await tryGeminiStream(
-            systemPrompt,
-            userMessage,
-            controller,
-            encoder,
-            startTime,
-          )
-          fullText = geminiResult.fullText
-          inputTokens = geminiResult.inputTokens
-          outputTokens = geminiResult.outputTokens
-          modelUsed = geminiResult.modelUsed
-        } catch (geminiErr) {
-          console.error(
-            '[Generate] Gemini HATA:',
-            geminiErr instanceof Error ? geminiErr.message : geminiErr
-          )
-          controller.enqueue(
-            encoder.encode('__ERROR__:İki model de yanıt veremiyor. Lütfen tekrar deneyin.')
-          )
-          controller.close()
-          return
-        }
+        console.error(
+          '[Generate] Tüm model denemeleri başarısız'
+        )
+        controller.enqueue(
+          encoder.encode('__ERROR__:İki model de yanıt veremiyor. Lütfen tekrar deneyin.')
+        )
+        controller.close()
+        return
       }
 
       // ══════════════════════════════════════════════════════

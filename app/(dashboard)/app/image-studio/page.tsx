@@ -52,7 +52,32 @@ export default function ImageStudioPage() {
         setErrorMsg('Lütfen bir görsel yükleyin.')
         return
       }
-      sourceImage = selectedFileUrl
+      // Dosya yükle ve URL al
+      setIsLoading(true)
+      try {
+        // Data URL'yi blob'a çevir
+        const response = await fetch(selectedFileUrl)
+        const blob = await response.blob()
+        
+        const formData = new FormData()
+        formData.append('file', blob, `image_${Date.now()}.jpg`)
+        
+        const uploadRes = await fetch('/api/images', {
+          method: 'POST',
+          body: formData
+        })
+        
+        const uploadData = await uploadRes.json()
+        if (!uploadRes.ok) {
+          throw new Error(uploadData.error || 'Dosya yükleme başarısız.')
+        }
+        
+        sourceImage = uploadData.url
+      } catch (err: any) {
+        setErrorMsg(err.message || 'Dosya yükleme sırasında hata oluştu.')
+        setIsLoading(false)
+        return
+      }
     }
 
     setIsLoading(true)

@@ -16,8 +16,8 @@ const anthropic = new Anthropic({
 // ═══════════════════════════════════════════════════════
 
 export const MODELS = {
-  PRIMARY: 'claude-sonnet-4-20250514' as const,
-  FALLBACK: 'claude-haiku-4-5-20250514' as const,
+  PRIMARY: 'claude-3-5-sonnet-20241022' as const,
+  FALLBACK: 'claude-3-5-haiku-20241022' as const,
 } as const
 
 // ═══════════════════════════════════════════════════════

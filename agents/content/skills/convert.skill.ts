@@ -4,9 +4,8 @@
 import { currentUser } from '@clerk/nextjs/server'
 import { getSupabaseAdmin } from '@/lib/supabase/server'
 import { generateObject } from 'ai'
-import { createGoogleGenerativeAI } from '@ai-sdk/google'
-import { createAnthropic } from '@ai-sdk/anthropic'
 import { createOpenAI } from '@ai-sdk/openai'
+import Groq from 'groq-sdk'
 import { z } from 'zod'
 import { scrapeUrl } from '../utils/scrape'
 import type { ConvertSkillInput, ConvertResult } from '../types/convert.types'
@@ -108,21 +107,31 @@ Her bir hedef platform için;
 - Kurallara (karakter sınırları, yasaklı kelimeler, bullet point zorunlulukları vb.) tam uyumlu,
 - Yeni bir Başlık (title) ve Açıklama (description) yaz.
 (HTML tagleri KULLANMA, metin ve madde imi (-) kullan.)
+
+YANIT FORMATI (Sadece JSON):
+{
+  "results": [
+    {
+      "platform": "platform_id",
+      "title": "yeni başlık",
+      "description": "yeni açıklama"
+    }
+  ]
+}
 `
 
   // 4. AI Çağrısı (Fallback Zinciri)
-  const geminiKey = process.env.GOOGLE_GENERATION_AI_API_KEY
-  const anthropicKey = process.env.ANTHROPIC_API_KEY
-  const nvidiaKey = process.env.NVIDIA_API_KEY
-  
-  if (!geminiKey && !anthropicKey && !nvidiaKey) {
+  const openrouterKey = process.env.OPENROUTER_API_KEY
+  const groqKey = process.env.GROQ_API_KEY
+
+  if (!openrouterKey && !groqKey) {
     throw new ConvertSkillError('AI servisi yapılandırılamadı (Key eksik).', 500)
   }
-  
+
   let resultObject: any = null
   let tokensUsed = 0
-  let modelUsed = 'abacusai/dracarys-llama-3.1-70b-instruct'
-  
+  let modelUsed = 'openrouter/free'
+
   const schema = z.object({
     results: z.array(z.object({
       platform: z.enum(input.targetPlatforms as [string, ...string[]]),
@@ -132,13 +141,13 @@ Her bir hedef platform için;
   })
 
   try {
-    if (!nvidiaKey) throw new Error('Nvidia key missing, skip to Gemini')
-    
-    console.log('[Convert] Nvidia API çağrılıyor...')
-    const nvidia = createOpenAI({ apiKey: nvidiaKey, baseURL: 'https://integrate.api.nvidia.com/v1' })
-    
+    if (!openrouterKey) throw new Error('OpenRouter key missing, skip to Groq')
+
+    console.log('[Convert] OpenRouter API çağrılıyor...')
+    const openrouter = createOpenAI({ apiKey: openrouterKey, baseURL: 'https://openrouter.ai/api/v1' })
+
     const { object, usage } = await generateObject({
-      model: nvidia('abacusai/dracarys-llama-3.1-70b-instruct'),
+      model: openrouter('openrouter/free'),
       schema: schema,
       system: systemPrompt,
       prompt: prompt,
@@ -146,88 +155,67 @@ Her bir hedef platform için;
     })
     resultObject = object
     tokensUsed = ((usage as any).promptTokens ?? (usage as any).inputTokens ?? 0) + ((usage as any).completionTokens ?? (usage as any).outputTokens ?? 0)
-    console.log('[Convert] Dönüştürme tamamlandı (Nvidia)')
-  } catch (nvidiaErr: any) {
-    console.warn('[Convert] Nvidia error, trying Gemini 2.5 Flash...', nvidiaErr?.message || nvidiaErr)
-    
+    console.log('[Convert] Dönüştürme tamamlandı (OpenRouter)')
+  } catch (openrouterErr: any) {
+    console.warn('[Convert] OpenRouter error, trying Groq fallback...', openrouterErr?.message || openrouterErr)
+
     try {
-      if (!geminiKey) throw new Error('Gemini key missing, skip to fallback')
-      
-      console.log('[Convert] Gemini 2.5 Flash API çağrılıyor...')
-      const google = createGoogleGenerativeAI({ apiKey: geminiKey })
-    
-    try {
-      const { object, usage } = await generateObject({
-        model: google('gemini-2.5-flash'),
-        schema: schema,
-        system: systemPrompt,
-        prompt: prompt,
-        temperature: 0.6
-      })
-      resultObject = object
-      tokensUsed = ((usage as any).promptTokens ?? (usage as any).inputTokens ?? 0) + ((usage as any).completionTokens ?? (usage as any).outputTokens ?? 0)
-      console.log('[Convert] Analiz tamamlandı (Gemini 2.5 Flash)')
-    } catch (geminiFlashErr: any) {
-      console.warn('[Convert] Gemini 2.5 Flash error, trying Gemini 2.0 Flash...', geminiFlashErr?.message || geminiFlashErr)
-      
-      const { object, usage } = await generateObject({
-        model: google('gemini-2.0-flash'),
-        schema: schema,
-        system: systemPrompt,
-        prompt: prompt,
-        temperature: 0.6
-      })
-      resultObject = object
-      tokensUsed = ((usage as any).promptTokens ?? (usage as any).inputTokens ?? 0) + ((usage as any).completionTokens ?? (usage as any).outputTokens ?? 0)
-      modelUsed = 'gemini-2.0-flash'
-      console.log('[Convert] Analiz tamamlandı (Gemini 2.0 Flash)')
-    }
-  } catch (err: any) {
-    console.warn('[Convert] Nvidia and Gemini models failed, falling back to Claude:', err?.message || err)
-    
-    try {
-      if (!anthropicKey) throw new Error('Anthropic key missing for fallback')
-      
-      console.log('[Convert] Claude 3.5 Sonnet API çağrılıyor (Fallback)...')
-      const anthropic = createAnthropic({ apiKey: anthropicKey })
-      
-      try {
-        const { object, usage } = await generateObject({
-          model: anthropic('claude-3-5-sonnet-latest'),
-          schema: schema,
-          system: systemPrompt,
-          prompt: prompt,
-          temperature: 0.6
-        })
-        resultObject = object
-        tokensUsed = ((usage as any).promptTokens ?? (usage as any).inputTokens ?? 0) + ((usage as any).completionTokens ?? (usage as any).outputTokens ?? 0)
-        modelUsed = 'claude-3-5-sonnet-latest'
-        console.log('[Convert] Analiz tamamlandı (Claude 3.5 Sonnet)')
-      } catch (claudeSonnetErr: any) {
-        console.warn('[Convert] Claude 3.5 Sonnet error, trying Haiku...', claudeSonnetErr?.message || claudeSonnetErr)
-        
-        const { object, usage } = await generateObject({
-          model: anthropic('claude-3-haiku-20240307'),
-          schema: schema,
-          system: systemPrompt,
-          prompt: prompt,
-          temperature: 0.6
-        })
-        resultObject = object
-        tokensUsed = ((usage as any).promptTokens ?? (usage as any).inputTokens ?? 0) + ((usage as any).completionTokens ?? (usage as any).outputTokens ?? 0)
-        modelUsed = 'claude-3-haiku-20240307'
-        console.log('[Convert] Analiz tamamlandı (Claude Haiku)')
+      if (!groqKey) {
+        throw new ConvertSkillError('Groq API anahtarı yapılandırılmadı.', 500)
       }
-    } catch (fallbackErr: any) {
-      console.error('[Convert] Fallback AI generation error:', fallbackErr)
-      const errString = fallbackErr?.message || String(fallbackErr)
+
+      const groq = new Groq({ apiKey: groqKey })
+      const response = await groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: 1500,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.6,
+      })
+
+      const responseContent = response.choices[0]?.message?.content
+      if (!responseContent) {
+        throw new Error('Groq yanıttı boş.')
+      }
+
+      // JSON çıkarmayı dene
+      const jsonMatch = responseContent.match(/(\{[\s\S]*\}|\[[\s\S]*\])/)
+      if (!jsonMatch) {
+        throw new Error('Groq yanıtında JSON bulunamadı.')
+      }
+
+      const parsed = JSON.parse(jsonMatch[0])
+
+      // Normalizasyon: Eğer direkt array geldiyse results içine koy
+      if (Array.isArray(parsed)) {
+        resultObject = { results: parsed }
+      } else if (parsed && parsed.results) {
+        resultObject = parsed
+      } else {
+        // Eğer results yoksa ama objeyse, belki direkt bir sonuç objesidir (tekli platform)
+        resultObject = { results: [parsed] }
+      }
+
+      tokensUsed = response.usage?.total_tokens ?? 0
+      modelUsed = 'llama-3.3-70b-versatile (Groq)'
+      console.log('[Convert] Analiz tamamlandı (Groq Llama)')
+    } catch (groqErr: any) {
+      console.warn('[Convert] Groq fallback error:', groqErr?.message || groqErr)
+      const errString = groqErr?.message || String(groqErr)
       if (errString.includes('credit balance is too low') || errString.includes('quota')) {
-         throw new ConvertSkillError('Yapay zeka API krediniz yetersiz veya kotalarınız dolmuş. Lütfen API anahtarlarınızın limitlerini kontrol edin.', 402)
+        throw new ConvertSkillError('Yapay zeka API krediniz yetersiz veya kotalarınız dolmuş. Lütfen API anahtarlarınızın limitlerini kontrol edin.', 402)
       }
-      throw new ConvertSkillError('İçerik dönüştürme sırasında tüm AI servisleri (Nvidia, Gemini ve Claude) yanıt vermedi.', 500)
+      throw new ConvertSkillError('İçerik dönüştürme sırasında tüm AI servisleri (OpenRouter ve Groq) yanıt vermedi.', 500)
     }
   }
-}
+
+  // Son güvenlik kontrolü
+  if (!resultObject || !resultObject.results || !Array.isArray(resultObject.results)) {
+    console.warn('[Convert] resultObject.results geçerli bir dizi değil, boş diziye dönüştürülüyor.')
+    resultObject = { results: [] }
+  }
 
   // 5. Veritabanı Kayıt ve Kredi Düşümü (Asenkron)
   const finalResult: ConvertResult = {
