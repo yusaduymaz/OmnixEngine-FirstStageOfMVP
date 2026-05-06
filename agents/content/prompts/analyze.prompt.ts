@@ -36,29 +36,29 @@ Hedef platform(lar): ${platformList}
 Bu içeriği aşağıdaki 5 kritere göre değerlendir. Her kriter için:
 - score (0–100)
 - status: "pass" (≥71) | "warn" (41–70) | "fail" (≤40)
-- message: Ne durumda olduğunu bir cümleyle açıkla
-- suggestion: İyileştirme önerisi (pass ise null olabilir)
-- currentValue: Mevcut değer veya ölçüm (opsiyonel, somut bilgi varsa ekle)
+- feedback: Kriterin neden bu puanı aldığını ve spesifik olarak neyin eksik olduğunu açıklayan detaylı Türkçe cümle.
 
 KRİTERLER:
 1. titleQuality — Başlık uzunluğu, anahtar kelime kullanımı, netlik, platform limitlerine uyum
 2. descriptionDepth — Bilgi zenginliği, fayda odaklılık, minimum kelime sayısı gereksinimleri
 3. keywordDensity — SEO anahtar kelime yoğunluğu, morfolojik varyant kullanımı, doğal dağılım
 4. platformRules — Hedef platformların yasaklı kelimeleri, format gereksinimleri, karakter limitleri
-5. legalCompliance — Türkiye Ticaret Bakanlığı gereksinimleri: hayvansal menşeli içerik beyanı (tekstil/ayakkabı), yanıltıcı üstünlük iddiaları ("en ucuz", "kesin çözüm"), CE belgesi zorunluluğu (bebek ürünleri), INCI listesi (kozmetik)
+5. legalCompliance — Türkiye Ticaret Bakanlığı gereksinimleri (tekstil beyanı, yanıltıcı iddialar, CE/INCI zorunlulukları)
 
-Genel SEO skoru (0–100) — 5 kriterin ağırlıklı ortalaması:
-  titleQuality: %20, descriptionDepth: %20, keywordDensity: %20, platformRules: %25, legalCompliance: %15
+Ayrıca, tüm analizi özetleyen en az 3 adet somut iyileştirme önerisi (suggestions) üret.
 
 SADECE JSON döndür, başka açıklama ekleme:
 {
   "overallScore": <number>,
   "criteriaScores": {
-    "titleQuality":      { "score": <number>, "status": "pass"|"warn"|"fail", "message": "<string>", "suggestion": "<string|null>", "currentValue": "<string|null>" },
-    "descriptionDepth":  { "score": <number>, "status": "pass"|"warn"|"fail", "message": "<string>", "suggestion": "<string|null>", "currentValue": "<string|null>" },
-    "keywordDensity":    { "score": <number>, "status": "pass"|"warn"|"fail", "message": "<string>", "suggestion": "<string|null>" },
-    "platformRules":     { "score": <number>, "status": "pass"|"warn"|"fail", "message": "<string>", "suggestion": "<string|null>" },
-    "legalCompliance":   { "score": <number>, "status": "pass"|"warn"|"fail", "message": "<string>", "suggestion": "<string|null>" }
-  }
+    "titleQuality":      { "score": <number>, "status": "pass"|"warn"|"fail", "feedback": "<string>" },
+    "descriptionDepth":  { "score": <number>, "status": "pass"|"warn"|"fail", "feedback": "<string>" },
+    "keywordDensity":    { "score": <number>, "status": "pass"|"warn"|"fail", "feedback": "<string>" },
+    "platformRules":     { "score": <number>, "status": "pass"|"warn"|"fail", "feedback": "<string>" },
+    "legalCompliance":   { "score": <number>, "status": "pass"|"warn"|"fail", "feedback": "<string>" }
+  },
+  "suggestions": [
+    { "title": "<string>", "description": "<string>", "priority": "high"|"medium"|"low" }
+  ]
 }`
 }

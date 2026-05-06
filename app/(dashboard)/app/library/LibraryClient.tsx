@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Sparkles, Clock, BarChart2, BookOpen, RefreshCw, Search, ExternalLink } from 'lucide-react'
 import GenerationModal from './GenerationModal'
+import AnalysisModal from './AnalysisModal'
 import type { GenerationRow, AnalysisRow } from './page'
 
 type Tab = 'all' | 'generate' | 'convert' | 'analyze'
@@ -429,13 +430,23 @@ export default function LibraryClient({
                   </div>
 
                   {/* AI ile Düzelt CTA */}
-                  <div className="px-4 pb-4">
+                  <div className="px-4 pb-4 flex items-center gap-2">
+                    <AnalysisModal
+                      id={analysis.id}
+                      sourceUrl={analysis.source_url}
+                      sourcePlatform={analysis.source_platform}
+                      targetPlatforms={analysis.target_platform}
+                      overallScore={analysis.overall_score}
+                      criteriaScores={analysis.criteria_scores as any}
+                      suggestions={(analysis as any).suggestions}
+                      onDeleted={handleDeleted}
+                    />
                     <Link
                       href={`/app/analyzer`}
-                      className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-xl border border-[#E8E4DC] text-xs font-medium text-[#6B6B7B] hover:border-[#FF6B35] hover:text-[#FF6B35] transition-colors"
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg border border-[#E8E4DC] text-xs font-medium text-[#6B6B7B] hover:border-[#FF6B35] hover:text-[#FF6B35] transition-colors"
                     >
                       <Search className="w-3.5 h-3.5" />
-                      Yeniden Analiz Et
+                      Yenile
                     </Link>
                   </div>
                 </div>

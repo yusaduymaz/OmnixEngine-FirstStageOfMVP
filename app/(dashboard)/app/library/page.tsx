@@ -75,7 +75,7 @@ export default async function LibraryPage() {
       supabase
         .from('analyses')
         .select(
-          'id, source_url, source_platform, target_platform, overall_score, criteria_scores, analysis_ms, created_at'
+          'id, source_url, source_platform, target_platform, overall_score, criteria_scores, suggestions, analysis_ms, created_at'
         )
         .eq('user_id', userData.id)
         .order('created_at', { ascending: false })

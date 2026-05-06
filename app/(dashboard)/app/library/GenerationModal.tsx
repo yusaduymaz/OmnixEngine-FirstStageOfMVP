@@ -12,6 +12,7 @@ import {
   Eye,
   Trash2,
   Loader2,
+  RefreshCw,
 } from 'lucide-react'
 
 // ── Tipler ────────────────────────────────────────────────────
@@ -22,6 +23,7 @@ interface AdCopyItem {
 }
 
 interface GenerationContent {
+  // Generate formatı
   titles?: { text: string; platform: string; char_count?: number }[]
   description_short?: string
   description_long?: string
@@ -30,6 +32,18 @@ interface GenerationContent {
   keywords_used?: string[]
   seo_score?: number
   seo_compliance_notes?: string
+  
+  // Convert formatı (Dönüştürme çıktıları)
+  results?: {
+    platform: string
+    title: string
+    description: string
+  }[]
+  scrapedData?: {
+    title: string
+    description: string
+    content: string
+  }
 }
 
 export interface GenerationModalProps {
@@ -55,6 +69,9 @@ const PLATFORM_COLORS: Record<string, string> = {
   amazon_tr: '#FF9900',
   ciceksepeti: '#E91E63',
   etsy: '#F1641E',
+  shopify: '#96bf48',
+  woocommerce: '#96588a',
+  amazon_us: '#FF9900',
 }
 
 const PLATFORM_LABELS: Record<string, string> = {
@@ -63,6 +80,9 @@ const PLATFORM_LABELS: Record<string, string> = {
   amazon_tr: 'Amazon TR',
   ciceksepeti: 'Çiçeksepeti',
   etsy: 'Etsy',
+  shopify: 'Shopify',
+  woocommerce: 'WooCommerce',
+  amazon_us: 'Amazon US',
 }
 
 // ── Kopyala Butonu ────────────────────────────────────────────
@@ -109,9 +129,16 @@ export default function GenerationModal({
   onDeleted,
 }: GenerationModalProps) {
   const [open, setOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState<'titles' | 'description' | 'ad'>('titles')
+  const [activeTab, setActiveTab] = useState<'titles' | 'description' | 'ad' | 'convert'>('titles')
   const [deleting, setDeleting] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+
+  // Eğer convert datası varsa varsayılan tabı ona çek
+  useEffect(() => {
+    if (results?.results && results.results.length > 0) {
+      setActiveTab('convert')
+    }
+  }, [results])
 
   // Modal açıkken body scroll kilitle
   useEffect(() => {
@@ -134,10 +161,14 @@ export default function GenerationModal({
   const openModal = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
     e.preventDefault()
-    setActiveTab('titles')
+    if (results?.results && results.results.length > 0) {
+      setActiveTab('convert')
+    } else {
+      setActiveTab('titles')
+    }
     setConfirmDelete(false)
     setOpen(true)
-  }, [])
+  }, [results])
 
   const closeModal = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation()
@@ -177,7 +208,8 @@ export default function GenerationModal({
     ((results.titles && results.titles.length > 0) ||
       results.description_short ||
       results.description_long ||
-      resolvedAdCopies.length > 0)
+      resolvedAdCopies.length > 0 ||
+      (results.results && results.results.length > 0))
 
   return (
     <>
@@ -392,6 +424,7 @@ export default function GenerationModal({
                     }}
                   >
                     {[
+                      ...(results.results && results.results.length > 0 ? [{ key: 'convert' as const, label: 'Dönüştürme', Icon: RefreshCw }] : []),
                       { key: 'titles' as const, label: 'Başlıklar', Icon: Zap },
                       { key: 'description' as const, label: 'Açıklama', Icon: FileText },
                       { key: 'ad' as const, label: 'Reklam Metni', Icon: Megaphone },
@@ -434,6 +467,54 @@ export default function GenerationModal({
                       gap: '14px',
                     }}
                   >
+                    {/* DÖNÜŞTÜRME (CONVERT) */}
+                    {activeTab === 'convert' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        {results.results?.map((res, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              background: '#F8F7F4',
+                              borderRadius: '16px',
+                              padding: '20px',
+                              border: '1px solid #E8E4DC',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '12px'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <span
+                                style={{
+                                  fontSize: '11px',
+                                  padding: '4px 12px',
+                                  borderRadius: '999px',
+                                  color: '#fff',
+                                  fontWeight: 700,
+                                  background: PLATFORM_COLORS[res.platform] ?? '#888',
+                                }}
+                              >
+                                {PLATFORM_LABELS[res.platform] ?? res.platform}
+                              </span>
+                              <div style={{ display: 'flex', gap: '6px' }}>
+                                <CopyBtn text={`${res.title}\n\n${res.description}`} />
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <p style={{ fontSize: '11px', fontWeight: 700, color: '#9E9EA8', textTransform: 'uppercase', marginBottom: '6px' }}>Başlık</p>
+                              <p style={{ fontSize: '15px', fontWeight: 600, color: '#1A1A2E', margin: 0 }}>{res.title}</p>
+                            </div>
+                            
+                            <div style={{ borderTop: '1px solid #E8E4DC', paddingTop: '12px' }}>
+                              <p style={{ fontSize: '11px', fontWeight: 700, color: '#9E9EA8', textTransform: 'uppercase', marginBottom: '6px' }}>Açıklama</p>
+                              <p style={{ fontSize: '14px', color: '#6B6B7B', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-line' }}>{res.description}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
                     {/* BAŞLIKLAR */}
                     {activeTab === 'titles' &&
                       (results.titles && results.titles.length > 0 ? (

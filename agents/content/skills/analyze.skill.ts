@@ -107,36 +107,34 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
       titleQuality: z.object({
         score: z.number().min(0).max(100),
         status: z.enum(['pass', 'warn', 'fail']),
-        message: z.string(),
-        suggestion: z.string().optional(),
-        currentValue: z.string().optional()
+        feedback: z.string().describe('Kriter puanının gerekçesi ve iyileştirme önerisi')
       }),
       descriptionDepth: z.object({
         score: z.number().min(0).max(100),
         status: z.enum(['pass', 'warn', 'fail']),
-        message: z.string(),
-        suggestion: z.string().optional(),
-        currentValue: z.string().optional()
+        feedback: z.string().describe('Açıklama derinliği hakkında detaylı geri bildirim')
       }),
       keywordDensity: z.object({
         score: z.number().min(0).max(100),
         status: z.enum(['pass', 'warn', 'fail']),
-        message: z.string(),
-        suggestion: z.string().optional()
+        feedback: z.string().describe('Anahtar kelime kullanımı hakkında geri bildirim')
       }),
       platformRules: z.object({
         score: z.number().min(0).max(100),
         status: z.enum(['pass', 'warn', 'fail']),
-        message: z.string(),
-        suggestion: z.string().optional()
+        feedback: z.string().describe('Hedef platform kurallarına uyum hakkında geri bildirim')
       }),
       legalCompliance: z.object({
         score: z.number().min(0).max(100),
         status: z.enum(['pass', 'warn', 'fail']),
-        message: z.string(),
-        suggestion: z.string().optional()
+        feedback: z.string().describe('Yasal zorunluluklar ve reklam kuralları hakkında geri bildirim')
       })
-    })
+    }),
+    suggestions: z.array(z.object({
+      title: z.string().describe('Önerinin kısa başlığı'),
+      description: z.string().describe('Önerinin detaylı açıklaması'),
+      priority: z.enum(['high', 'medium', 'low'])
+    })).min(1, 'En az bir iyileştirme önerisi üretilmelidir.')
   })
 
   try {
@@ -207,7 +205,8 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
   }
 
   try {
-    await Promise.all([
+    console.log('[Analyze] DB Kayıt denemesi:', { userId: user.id, source: input.url })
+    const [analysisSave, creditUpdate] = await Promise.all([
       supabase.from('analyses').insert({
         user_id: user.id,
         source_url: input.url,
@@ -221,9 +220,18 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
       }),
       supabase.from('users').update({ credits_used: user.credits_used + 1 }).eq('id', user.id)
     ])
-    console.log('[Analyze] DB kayıt ve kredi düşümü başarılı.')
+
+    if (analysisSave.error) {
+      console.error('[Analyze] Analiz kaydı başarısız:', analysisSave.error)
+    } else {
+      console.log('[Analyze] Analiz başarıyla kaydedildi.')
+    }
+
+    if (creditUpdate.error) {
+      console.error('[Analyze] Kredi güncelleme başarısız:', creditUpdate.error)
+    }
   } catch (err) {
-    console.error('[Analyze] DB kayıt/kredi düşümü hatası:', err)
+    console.error('[Analyze] DB kayıt/kredi düşümü sırasında kritik hata:', err)
   }
 
   return finalResult
