@@ -1,5 +1,33 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import PricingSection from '@/components/landing/PricingSection'
+import LoginLink from '@/components/landing/LoginLink'
+import { getSiteSettings } from '@/lib/site-settings'
+
+interface HeroContent {
+  title: string
+  subtitle: string
+  ctaPrimary: string
+  ctaSecondary: string
+}
+interface PricingHead {
+  headline: string
+  subline: string
+}
+interface MarketingBanner {
+  enabled: boolean
+  message: string
+  ctaHref?: string
+  ctaLabel?: string
+}
+
+const HERO_FALLBACK: HeroContent = {
+  title: 'Tüm pazaryerleri için tek motor: OmniX Engine',
+  subtitle:
+    'Trendyol, Hepsiburada, Amazon, Shopify, Etsy ve dahası — SEO odaklı içerik, akıllı analiz ve profesyonel görsel üretimini tek panelden yönetin.',
+  ctaPrimary: 'Ücretsiz Dene',
+  ctaSecondary: 'Demoyu Gör',
+}
 
 export const metadata: Metadata = {
   title: 'OmniX Engine — Global Pazaryerleri için AI İçerik Üreteci',
@@ -39,12 +67,9 @@ function NavBar() {
 
         {/* CTA'lar */}
         <div className="flex items-center gap-3">
-          <Link
-            href="/login"
-            className="hidden sm:block text-[#6B6B7B] font-semibold text-sm px-4 py-2 hover:text-[#1A1A2E] transition-colors"
-          >
+          <LoginLink className="hidden sm:block text-[#6B6B7B] font-semibold text-sm px-4 py-2 hover:text-[#1A1A2E] transition-colors">
             Giriş Yap
-          </Link>
+          </LoginLink>
           <Link
             href="/register"
             className="bg-[#FF6B35] hover:bg-[#e85d2a] text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm hover:shadow-md transition-all"
@@ -57,7 +82,7 @@ function NavBar() {
   )
 }
 
-function HeroSection() {
+function HeroSection({ content }: { content: HeroContent }) {
   return (
     <header id="hero" className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden bg-[#F8F7F4]">
       {/* Arkaplan blob'ları */}
@@ -84,16 +109,11 @@ function HeroSection() {
               className="text-5xl md:text-6xl xl:text-7xl font-extrabold tracking-tighter leading-[1.05] text-[#1A1A2E]"
               style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}
             >
-              YENİ NESİL {' '}
-              <span className="text-[#FF6B35]">OMNICHANNEL</span>
-              <br />
-              {' '}AI MOTORU
+              {content.title}
             </h1>
 
             <p className="text-lg md:text-xl text-[#6B6B7B] max-w-xl leading-relaxed">
-              Shopify, Amazon, Etsy ve yerel pazaryerleri... Tek bir
-              tıkla her platformun algoritmasına özel, yüksek dönüşümlü <strong className="text-[#1A1A2E]">ürün
-                listelemeleri</strong> ve <strong className="text-[#1A1A2E]">görselleri</strong> oluşturun.
+              {content.subtitle}
             </p>
 
             <div className="flex flex-wrap gap-4">
@@ -101,7 +121,7 @@ function HeroSection() {
                 href="/register"
                 className="inline-flex items-center gap-2 bg-[#FF6B35] hover:bg-[#e85d2a] text-white px-8 py-4 rounded-xl font-bold text-base shadow-lg shadow-[#FF6B35]/25 hover:shadow-xl hover:shadow-[#FF6B35]/30 transition-all"
               >
-                Hemen Başla — Ücretsiz
+                {content.ctaPrimary}
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
@@ -110,7 +130,7 @@ function HeroSection() {
                 href="/hizmetlerimiz"
                 className="inline-flex items-center gap-2 bg-white text-[#1A1A2E] border border-[#E8E4DC] px-8 py-4 rounded-xl font-bold text-base hover:border-[#FF6B35]/40 hover:bg-[#F8F7F4] transition-all"
               >
-                Nasıl Çalışır?
+                {content.ctaSecondary}
               </Link>
             </div>
 
@@ -781,121 +801,7 @@ function MarketplaceSection() {
   )
 }
 
-function PricingSection() {
-  const plans = [
-    {
-      name: 'Ücretsiz Deneme',
-      price: '₺0',
-      period: 'tek seferlik',
-      credits: '50 üretim',
-      features: ['Tekil içerik üretimi', '1 platform', 'SEO skoru', 'İçerik kütüphanesi'],
-      cta: 'Hemen Başla',
-      href: '/register',
-      highlight: false,
-    },
-    {
-      name: 'Starter',
-      price: '₺299',
-      period: '/ ay',
-      credits: '500 kredi / ay',
-      features: ['2 platform (TY + HB)', 'İçerik kütüphanesi', 'Ekstra anahtar kelime', 'E-posta desteği'],
-      cta: 'Starter\'a Başla',
-      href: '/register',
-      highlight: true,
-    },
-    {
-      name: 'Growth',
-      price: '₺799',
-      period: '/ ay',
-      credits: '2.000 kredi / ay',
-      features: ['Toplu yükleme (CSV)', 'API erişimi', 'Öncelikli destek', 'Tüm Starter özellikleri'],
-      cta: 'Growth\'a Geç',
-      href: '/register',
-      highlight: false,
-    },
-  ]
-
-  return (
-    <section id="fiyat" className="py-24 bg-[#F8F7F4]">
-      <div className="max-w-6xl mx-auto px-6 md:px-8">
-        <div className="text-center mb-16">
-          <p className="text-xs font-bold text-[#FF6B35] uppercase tracking-widest mb-3">Fiyatlandırma</p>
-          <h2
-            className="text-4xl font-bold text-[#1A1A2E] tracking-tight mb-4"
-            style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}
-          >
-            Sadece İhtiyacınız Kadar Ödeyin
-          </h2>
-          <p className="text-[#6B6B7B] text-lg">Kredi kartı gerekmez. İstediğiniz zaman iptal edin.</p>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          {plans.map((plan, i) => (
-            <div
-              key={i}
-              className={`relative rounded-2xl p-6 border transition-all ${plan.highlight
-                ? 'bg-[#1A1A2E] border-[#1A1A2E] shadow-xl shadow-[#1A1A2E]/20'
-                : 'bg-white border-[#E8E4DC] hover:shadow-md'
-                }`}
-            >
-              {plan.highlight && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="bg-[#FF6B35] text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
-                    En Popüler
-                  </span>
-                </div>
-              )}
-
-              <div className="mb-5">
-                <p className={`text-sm font-semibold mb-2 ${plan.highlight ? 'text-white/70' : 'text-[#6B6B7B]'}`}>
-                  {plan.name}
-                </p>
-                <div className="flex items-baseline gap-1">
-                  <span
-                    className={`text-4xl font-extrabold ${plan.highlight ? 'text-white' : 'text-[#1A1A2E]'}`}
-                    style={{ fontFamily: 'Bricolage Grotesque, sans-serif' }}
-                  >
-                    {plan.price}
-                  </span>
-                  <span className={`text-sm ${plan.highlight ? 'text-white/50' : 'text-[#9E9EA8]'}`}>
-                    {plan.period}
-                  </span>
-                </div>
-                <p className={`text-sm mt-1 font-medium ${plan.highlight ? 'text-[#FF6B35]' : 'text-[#FF6B35]'}`}>
-                  {plan.credits}
-                </p>
-              </div>
-
-              <ul className="space-y-2.5 mb-6">
-                {plan.features.map((f, j) => (
-                  <li key={j} className="flex items-center gap-2">
-                    <svg
-                      className={`w-4 h-4 shrink-0 ${plan.highlight ? 'text-[#FF6B35]' : 'text-green-500'}`}
-                      fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span className={`text-sm ${plan.highlight ? 'text-white/80' : 'text-[#6B6B7B]'}`}>{f}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <Link
-                href={plan.href}
-                className={`block w-full py-3 rounded-xl text-center text-sm font-bold transition-all ${plan.highlight
-                  ? 'bg-[#FF6B35] text-white hover:bg-[#e85d2a] shadow-sm'
-                  : 'border border-[#E8E4DC] text-[#1A1A2E] hover:border-[#FF6B35] hover:text-[#FF6B35]'
-                  }`}
-              >
-                {plan.cta}
-              </Link>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
+// PricingSection: components/landing/PricingSection.tsx olarak ayrı client component
 
 function CTASection() {
   return (
@@ -926,12 +832,9 @@ function CTASection() {
             >
               Ücretsiz Kayıt Ol — 50 Kredi
             </Link>
-            <Link
-              href="/login"
-              className="bg-transparent border-2 border-white/40 text-white px-10 py-4 rounded-xl font-bold text-lg hover:bg-white/10 transition-all"
-            >
+            <LoginLink className="bg-transparent border-2 border-white/40 text-white px-10 py-4 rounded-xl font-bold text-lg hover:bg-white/10 transition-all">
               Giriş Yap
-            </Link>
+            </LoginLink>
           </div>
           <p className="text-orange-200/80 text-sm">
             Kredi kartı gerekmez • 50 üretim ücretsiz • İstediğiniz zaman iptal
@@ -951,9 +854,9 @@ function Footer() {
   ]
 
   const legalLinks = [
-    { label: 'Gizlilik Politikası', href: '#' },
-    { label: 'Kullanım Koşulları', href: '#' },
-    { label: 'KVKK', href: '#' },
+    { label: 'Gizlilik Politikası', href: '/privacy' },
+    { label: 'Kullanım Koşulları', href: '/terms' },
+    { label: 'KVKK', href: '/privacy#kvkk' },
   ]
 
   return (
@@ -1022,11 +925,26 @@ function Footer() {
 
 // ─── Ana Sayfa ───────────────────────────────────────────────────────────────
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const settings = await getSiteSettings(['landing.hero', 'landing.pricing', 'marketing.banner'])
+  const hero = (settings['landing.hero'] as HeroContent) ?? HERO_FALLBACK
+  const banner = (settings['marketing.banner'] as MarketingBanner) ?? { enabled: false, message: '' }
+  void (settings['landing.pricing'] as PricingHead | undefined)
+
   return (
     <>
+      {banner.enabled && banner.message ? (
+        <div className="fixed top-0 left-0 right-0 z-[60] bg-[#1A1A2E] text-white text-sm py-2 px-4 text-center">
+          {banner.message}
+          {banner.ctaHref && banner.ctaLabel && (
+            <Link href={banner.ctaHref} className="ml-3 underline font-bold text-[#FF6B35]">
+              {banner.ctaLabel}
+            </Link>
+          )}
+        </div>
+      ) : null}
       <NavBar />
-      <HeroSection />
+      <HeroSection content={hero} />
       <FeaturesSection />
       <ImageStudioSection />
       <HowItWorksSection />

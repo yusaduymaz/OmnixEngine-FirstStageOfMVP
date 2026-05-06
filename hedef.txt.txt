@@ -1,0 +1,31 @@
+OmniX Engine'in "patronu" ve vizyoneri olarak, önümüzdeki 4 teknik adımı (Audit Fix, Image Integration, Bulk, Dashboard) temel altyapının tamamlanması olarak görüyorum. Ancak gerçek bir senior ve yönetici perspektifiyle, OmniX'i bir "araç" olmaktan çıkarıp bir "E-Ticaret İşletim Sistemi" haline getirecek asıl büyük planım şu 4 ana aşamadan oluşuyor:
+
+1. Aşama: "Zero-Click" Entegrasyon Derinliği (Marketplace API Sync)
+Şu an kullanıcı veriyi kopyalayıp platformuna yapıştırıyor veya manuel yüklüyor. Patron olarak hedefim:
+
+API-First Yaklaşım: Trendyol, Hepsiburada, Shopify ve WooCommerce ile doğrudan API entegrasyonu.
+Auto-Publish: "Denetimi Onayla ve Yayına Al" butonu. OmniX'te optimize edilen içerik ve görselin tek tıkla canlıdaki mağazaya gönderilmesi.
+App Store Listelemeleri: OmniX'i bir web sitesinden öte, Shopify App Store ve WooCommerce eklenti havuzunda bir "plugin" haline getirmek.
+2. Aşama: Global Genişleme (Multi-Language & Global SEO)
+OmniX şu an Türkçe'de çok güçlü. Ancak senior vizyonum bunu global pazara taşımak:
+
+Etsy & Amazon Global: Sadece dil çevirisi değil, o pazarın (Almanya, ABD, İngiltere) kültürel SEO dinamiklerine (Local nuances) göre içerik üreten kültürel adaptasyon katmanı.
+Cross-Border Arbitrage: Türkiye'deki bir ürünün Amazon.de veya Etsy kurallarına göre otomatik "lokalizasyonu".
+3. Aşama: Otonom Geri Besleme Döngüsü (Autonomous Feedback Loop)
+Gerçek zeka burada başlıyor. Agentların birbiriyle konuştuğu bir kapalı döngü:
+
+Performance-Driven AI: Eğer bir ürünün satış hızı (Inventory Agent verisiyle) düşerse veya rakip fiyatı (Pricing Agent) altına inerse; Content Agent otomatik olarak bir "Aciliyet/Kampanya" içeriği üretip kullanıcıya bildirim atacak: "Satışın düştü, başlığı 'Fırsat Ürünü' olarak güncelleyelim mi?"
+AI Visual Studio 2.0: Sadece arka plan silme değil; ürünün 15 saniyelik Instagram/TikTok reklam videosunu (Video Generation) otomatik üreten bir medya fabrikası.
+4. Aşama: Kurumsal API & White-Label (B2B SaaS)
+OmniX'i sadece son kullanıcıya değil, diğer yazılım şirketlerine (ERP ve PIM sistemlerine) pazarlamak:
+
+OmniX API: Büyük e-ticaret ajanslarının kendi panellerine entegre edebileceği "Zeka Katmanı" (Intelligence-as-a-Service).
+Custom Fine-Tuning: Büyük markaların (Örn: LCW, Karaca) kendi marka seslerine (Brand Voice) göre eğitilmiş özel AI modelleri.
+Özetle Patronun Ajandası:
+Hız: Altyapıyı (mevcut adımlar) bu hafta bitiriyoruz.
+Bağlılık: API entegrasyonlarıyla kullanıcının platformdan çıkmamasını sağlıyoruz.
+Ölçek: Global pazar ve toplu işlem (Bulk) ile hacmi artırıyoruz.
+Zeka: Kendi kendine öğrenen ve aksiyon öneren otonom sistemle "Vazgeçilmez" oluyoruz.
+Şu anki teknik odağımız: Bu vizyona giden yolda "Audit Persistence" (Denetim Kaydı) sorununu çözmek; çünkü veri kaydedilemezse, yukarıdaki otonom döngülerin hiçbiri çalışamaz.
+
+Hadi, şu veritabanı sorununu çözelim de vizyona odaklanalım!

@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
+import { Toaster } from 'sonner'
+import { QueryProvider } from '@/components/providers/QueryProvider'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -32,7 +34,19 @@ export default function RootLayout({
             rel="stylesheet"
           />
         </head>
-        <body className="antialiased">{children}</body>
+        <body className="antialiased">
+          <QueryProvider>{children}</QueryProvider>
+          <Toaster
+            richColors
+            position="top-right"
+            closeButton
+            toastOptions={{
+              style: {
+                fontFamily: 'DM Sans, system-ui, sans-serif',
+              },
+            }}
+          />
+        </body>
       </html>
     </ClerkProvider>
   )

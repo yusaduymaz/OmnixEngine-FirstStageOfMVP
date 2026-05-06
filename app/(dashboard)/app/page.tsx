@@ -56,7 +56,7 @@ export default async function DashboardPage() {
 
   const { data: user } = await supabase
     .from('users')
-    .select('id, plan, credits_used, credits_limit')
+    .select('id, plan, role, credits_used, credits_limit')
     .eq('clerk_id', clerkUser.id)
     .single()
 
@@ -173,7 +173,14 @@ export default async function DashboardPage() {
               </div>
               <div className="text-xs">
                 <p className="text-[#9E9EA8] font-bold uppercase tracking-widest">Plan</p>
-                <p className="text-[#1A1A2E] font-bold uppercase">{user?.plan ?? 'trial'}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-[#1A1A2E] font-bold uppercase">{user?.plan ?? 'trial'}</p>
+                  {user?.role === 'admin' && (
+                    <span className="inline-flex items-center gap-0.5 rounded-full bg-[#1A1A2E] text-white text-[9px] font-bold px-1.5 py-0.5 uppercase">
+                      Admin
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>

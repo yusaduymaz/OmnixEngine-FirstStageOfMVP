@@ -21,6 +21,7 @@ import { streamText } from 'ai'
 import Groq from 'groq-sdk'
 import { buildSystemPrompt, buildUserMessage, type Tone, type PlatformId } from '@/prompts/system'
 import { getSupabaseAdmin } from '@/lib/supabase/server'
+import { tokensToCredits, tokensToUsd } from '@/lib/billing/credit-cost'
 import type { GenerateSkillInput, SupabaseUserRow, ParsedTitle, ExtractedJSON } from '../types/generate.types'
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -322,14 +323,26 @@ async function saveGenerationAndDeductCredit(params: {
     console.log('[Generate] DB kayıt başarılı. Status:', parsedResult ? 'completed' : 'failed')
   }
 
-  // Kredi düşümü
-  await supabase
-    .from('users')
-    .update({ credits_used: user.credits_used + 1 })
-    .eq('id', user.id)
-    .then(({ error }) => {
-      if (error) console.error('[Generate] Kredi düşümü hatası:', error)
-    })
+  // Token-bazlı kredi düşümü (atomik RPC — race condition önleme)
+  const microCredits = tokensToCredits(modelUsed, inputTokens, outputTokens)
+  const costUsd = tokensToUsd(modelUsed, inputTokens, outputTokens)
+
+  const { error: rpcError } = await supabase
+    .rpc('increment_credits', { user_uuid: user.id, amount: microCredits })
+  if (rpcError) console.error('[Generate] Kredi düşümü hatası:', rpcError)
+
+  // Audit transaction kaydı
+  await supabase.from('credit_transactions').insert({
+    user_id: user.id,
+    amount: -microCredits,
+    type: 'usage',
+    module: 'generate',
+    reference: null,
+    tokens_input: inputTokens,
+    tokens_output: outputTokens,
+    model: modelUsed,
+    cost_usd: costUsd,
+  })
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

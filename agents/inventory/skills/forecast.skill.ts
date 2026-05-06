@@ -2,6 +2,7 @@ import { getSupabaseAdmin } from '@/lib/supabase/server'
 import { generateObject } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 import { z } from 'zod'
+import { tokensToCredits, tokensToUsd } from '@/lib/billing/credit-cost'
 import { InventorySkillInput, InventoryResult, StockHealth, InventoryRecommendation } from '../types'
 
 export class InventorySkillError extends Error {
@@ -34,17 +35,15 @@ export async function inventorySkill(input: InventorySkillInput): Promise<Invent
     throw new InventorySkillError('Krediniz tükendi.', 403)
   }
 
-  // 2. Satış Hızı Hesaplama (Basit veya AI Destekli)
-  const salesAvg = input.last7DaysSales ? (input.last7DaysSales / 7) : 0
-  
-  // 3. AI ile Tahminleme
+  // 2. AI ile Tahminleme
   const openrouterKey = process.env.OPENROUTER_API_KEY
-  if (!openrouterKey) throw new PricingSkillError('AI servisi yapılandırılamadı.', 500)
+  if (!openrouterKey) throw new InventorySkillError('AI servisi yapılandırılamadı.', 500)
 
   const openrouter = createOpenAI({ apiKey: openrouterKey, baseURL: 'https://openrouter.ai/api/v1' })
+  const modelId = 'anthropic/claude-3-5-sonnet'
 
-  const { object: result } = await generateObject({
-    model: openrouter('openrouter/free'),
+  const { object: result, usage } = await generateObject({
+    model: openrouter(modelId),
     schema: z.object({
       dailySalesAvg: z.number(),
       daysToStockout: z.number().nullable(),
@@ -72,6 +71,11 @@ export async function inventorySkill(input: InventorySkillInput): Promise<Invent
     `
   })
 
+  const inputTokens = (usage as any).promptTokens ?? (usage as any).inputTokens ?? 0
+  const outputTokens = (usage as any).completionTokens ?? (usage as any).outputTokens ?? 0
+  const credits = tokensToCredits(modelId, inputTokens, outputTokens)
+  const costUsd = tokensToUsd(modelId, inputTokens, outputTokens)
+
   const finalResult: InventoryResult = {
     currentStock: input.currentStock,
     dailySalesAvg: result.dailySalesAvg,
@@ -82,7 +86,7 @@ export async function inventorySkill(input: InventorySkillInput): Promise<Invent
     analysisMs: Date.now() - startTime
   }
 
-  // 4. Veritabanına Kayıt
+  // 3. Veritabanı kayıt + token-bazlı kredi düşümü
   try {
     const [invSave] = await Promise.all([
       supabase.from('inventory_reports').insert({
@@ -97,25 +101,29 @@ export async function inventorySkill(input: InventorySkillInput): Promise<Invent
         recommendation: finalResult.recommendation,
         ai_insights: finalResult.aiInsights,
         analysis_ms: finalResult.analysisMs,
-        credits_charged: 1
+        credits_charged: credits
       }).select('id').single(),
-      supabase.rpc('increment_credits', { user_uuid: user.id })
+      supabase.rpc('increment_credits', { user_uuid: user.id, amount: credits })
     ])
 
     if (invSave.data) {
       finalResult.id = invSave.data.id
     }
+
+    await supabase.from('credit_transactions').insert({
+      user_id: user.id,
+      amount: -credits,
+      type: 'usage',
+      module: 'inventory',
+      reference: invSave.data?.id ?? null,
+      tokens_input: inputTokens,
+      tokens_output: outputTokens,
+      model: modelId,
+      cost_usd: costUsd,
+    })
   } catch (err) {
     console.error('[Inventory] DB kaydı hatası:', err)
   }
 
   return finalResult
-}
-
-// PricingSkillError importunu düzelteyim, hata verebilir
-class PricingSkillError extends Error {
-  constructor(message: string, public statusCode: number = 500) {
-    super(message)
-    this.name = 'PricingSkillError'
-  }
 }

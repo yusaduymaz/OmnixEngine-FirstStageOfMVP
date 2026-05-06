@@ -3,6 +3,7 @@
  */
 import { currentUser } from '@clerk/nextjs/server'
 import { getSupabaseAdmin } from '@/lib/supabase/server'
+import { tokensToCredits, tokensToUsd, scrapeCredits } from '@/lib/billing/credit-cost'
 import { generateObject } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 import Groq from 'groq-sdk'
@@ -109,7 +110,8 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
   }
 
   let resultObject: any = null
-  let tokensUsed = 0
+  let inputTokens = 0
+  let outputTokens = 0
   let modelUsed = 'openrouter/free'
 
   const schema = z.object({
@@ -162,7 +164,8 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
       temperature: 0.3
     })
     resultObject = object
-    tokensUsed = ((usage as any).promptTokens ?? (usage as any).inputTokens ?? 0) + ((usage as any).completionTokens ?? (usage as any).outputTokens ?? 0)
+    inputTokens = (usage as any).promptTokens ?? (usage as any).inputTokens ?? 0
+    outputTokens = (usage as any).completionTokens ?? (usage as any).outputTokens ?? 0
     console.log('[Analyze] Analiz tamamlandı (OpenRouter), skor:', resultObject.overallScore)
   } catch (openrouterErr: any) {
     console.warn('[Analyze] OpenRouter error, trying Groq fallback...', openrouterErr?.message || openrouterErr)
@@ -196,7 +199,8 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
 
       const parsed = JSON.parse(jsonMatch[0])
       resultObject = parsed
-      tokensUsed = response.usage?.total_tokens ?? 0
+      inputTokens = response.usage?.prompt_tokens ?? 0
+      outputTokens = response.usage?.completion_tokens ?? 0
       modelUsed = 'llama-3.3-70b-versatile (Groq)'
       console.log('[Analyze] Analiz tamamlandı (Groq Llama), skor:', resultObject.overallScore)
     } catch (groqErr: any) {
@@ -215,8 +219,13 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
     scrapedData
   }
 
+  // Token-bazlı kredi maliyeti: scraping + AI çağrısı
+  const aiCredits = tokensToCredits(modelUsed, inputTokens, outputTokens)
+  const totalCredits = aiCredits + scrapeCredits()
+  const costUsd = tokensToUsd(modelUsed, inputTokens, outputTokens)
+
   try {
-    console.log('[Analyze] DB Kayıt denemesi:', { userId: user.id, source: input.url })
+    console.log('[Analyze] DB Kayıt denemesi:', { userId: user.id, source: input.url, credits: totalCredits })
     const [analysisSave, creditUpdate] = await Promise.all([
       supabase.from('analyses').insert({
         user_id: user.id,
@@ -227,9 +236,9 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
         criteria_scores: finalResult.criteriaScores as unknown as Record<string, unknown>,
         suggestions: (finalResult as any).suggestions || null,
         analysis_ms: Date.now() - startTime,
-        credits_charged: 1
+        credits_charged: totalCredits
       }).select('id').single(),
-      supabase.rpc('increment_credits', { user_uuid: user.id })
+      supabase.rpc('increment_credits', { user_uuid: user.id, amount: totalCredits })
     ])
 
     if (analysisSave.data) {
@@ -240,6 +249,19 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
     if (creditUpdate.error) {
       console.error('[Analyze] Kredi güncelleme başarısız:', creditUpdate.error)
     }
+
+    // Audit transaction kaydı
+    await supabase.from('credit_transactions').insert({
+      user_id: user.id,
+      amount: -totalCredits,
+      type: 'usage',
+      module: 'analyze',
+      reference: analysisSave.data?.id ?? null,
+      tokens_input: inputTokens,
+      tokens_output: outputTokens,
+      model: modelUsed,
+      cost_usd: costUsd,
+    })
   } catch (err) {
     console.error('[Analyze] DB kayıt/kredi düşümü sırasında kritik hata:', err)
   }

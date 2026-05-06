@@ -2,6 +2,7 @@ import { getSupabaseAdmin } from '@/lib/supabase/server'
 import { generateObject } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 import { z } from 'zod'
+import { tokensToCredits, tokensToUsd, scrapeCredits } from '@/lib/billing/credit-cost'
 import { PricingSkillInput, PricingResult, CompetitorData, MarginAnalysis } from '../types'
 import { scrapeUrl } from '@/agents/content/utils/scrape'
 
@@ -51,9 +52,10 @@ export async function pricingSkill(input: PricingSkillInput): Promise<PricingRes
   if (!openrouterKey) throw new PricingSkillError('AI servisi yapılandırılamadı.', 500)
 
   const openrouter = createOpenAI({ apiKey: openrouterKey, baseURL: 'https://openrouter.ai/api/v1' })
+  const modelId = 'anthropic/claude-3-5-sonnet'
 
-  const { object: result } = await generateObject({
-    model: openrouter('openrouter/free'),
+  const { object: result, usage } = await generateObject({
+    model: openrouter(modelId),
     schema: z.object({
       marketScore: z.number().min(0).max(100),
       competitors: z.array(z.object({
@@ -116,7 +118,14 @@ export async function pricingSkill(input: PricingSkillInput): Promise<PricingRes
     analysisMs: Date.now() - startTime
   }
 
-  // 5. Veritabanına Kayıt
+  // 5. Token-bazlı kredi muhasebesi
+  const inputTokens = (usage as any).promptTokens ?? (usage as any).inputTokens ?? 0
+  const outputTokens = (usage as any).completionTokens ?? (usage as any).outputTokens ?? 0
+  const aiCredits = tokensToCredits(modelId, inputTokens, outputTokens)
+  const totalCredits = aiCredits + (input.sourceUrl ? scrapeCredits() : 0)
+  const costUsd = tokensToUsd(modelId, inputTokens, outputTokens)
+
+  // 6. Veritabanına Kayıt
   try {
     const [pricingSave] = await Promise.all([
       supabase.from('pricing_analyses').insert({
@@ -131,14 +140,26 @@ export async function pricingSkill(input: PricingSkillInput): Promise<PricingRes
         market_position: finalResult.marketPosition,
         ai_feedback: finalResult.aiFeedback,
         analysis_ms: finalResult.analysisMs,
-        credits_charged: 1
+        credits_charged: totalCredits
       }).select('id').single(),
-      supabase.rpc('increment_credits', { user_uuid: user.id })
+      supabase.rpc('increment_credits', { user_uuid: user.id, amount: totalCredits })
     ])
 
     if (pricingSave.data) {
       finalResult.id = pricingSave.data.id
     }
+
+    await supabase.from('credit_transactions').insert({
+      user_id: user.id,
+      amount: -totalCredits,
+      type: 'usage',
+      module: 'pricing',
+      reference: pricingSave.data?.id ?? null,
+      tokens_input: inputTokens,
+      tokens_output: outputTokens,
+      model: modelId,
+      cost_usd: costUsd,
+    })
   } catch (err) {
     console.error('[Pricing] DB kaydı sırasında hata:', err)
   }
