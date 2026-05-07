@@ -43,6 +43,7 @@ export interface AnalysisRow {
   target_platform: string[]
   overall_score: number | null
   criteria_scores: Record<string, { score: number; status: string; message: string }> | null
+  suggestions?: Array<{ title: string; description: string; priority: 'high' | 'medium' | 'low' }> | null
   analysis_ms: number | null
   created_at: string
 }

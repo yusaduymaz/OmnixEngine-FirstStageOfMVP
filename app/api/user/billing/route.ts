@@ -11,11 +11,13 @@ export async function GET() {
 
   const supabase = getSupabaseAdmin()
 
-  let { data: user, error: userError } = await supabase
+  const { data: userData, error: userError } = await supabase
     .from('users')
     .select('id, plan, credits_used, credits_limit')
     .eq('clerk_id', userId)
     .maybeSingle()
+
+  let user = userData
 
   if (userError) {
     return NextResponse.json({ hata: 'Kullanıcı sorgulanırken hata oluştu' }, { status: 500 })

@@ -18,8 +18,9 @@ import {
 // ── Tipler ────────────────────────────────────────────────────
 interface CriterionScore {
   score: number
-  status: 'pass' | 'warn' | 'fail'
-  feedback: string
+  status: string
+  feedback?: string
+  message?: string
 }
 
 interface Suggestion {
@@ -73,7 +74,9 @@ const CRITERIA_LABELS: Record<string, string> = {
 // ── Portal Modal ───────────────────────────────────────────────
 function ModalPortal({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false)
-  useEffect(() => { setMounted(true) }, [])
+  useEffect(() => {
+    setMounted(true)
+  }, [])
   if (!mounted) return null
   return createPortal(children, document.body)
 }
@@ -218,7 +221,7 @@ export default function AnalysisModal({
                 }}
               >
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ display: 'flex', items: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                     <span
                       style={{
                         fontSize: '10px',
@@ -379,7 +382,7 @@ export default function AnalysisModal({
                           </span>
                         </div>
                         <p style={{ fontSize: '13px', color: '#6B6B7B', lineHeight: 1.5, margin: 0 }}>
-                          {val.feedback}
+                          {val.feedback ?? val.message ?? ''}
                         </p>
                       </div>
                     ))}

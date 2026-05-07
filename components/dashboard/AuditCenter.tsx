@@ -7,21 +7,19 @@ import {
   ArrowRight,
   Loader2,
   CheckCircle2,
-  AlertCircle,
   BarChart3,
   SearchCode,
-  ShieldCheck,
   Package,
   TrendingUp,
   ExternalLink,
   ChevronDown,
-  Info,
-  X,
   Target
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSettingsStore } from '@/hooks/useSettingsStore'
 import AuditReportModal from './AuditReportModal'
+
+import { AuditResult } from '@/types/global'
 
 export default function AuditCenter() {
   const { country } = useSettingsStore()
@@ -52,7 +50,7 @@ export default function AuditCenter() {
 
   // UI State
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<AuditResult | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [progress, setProgress] = useState<Record<string, 'pending' | 'loading' | 'completed' | 'failed'>>({
     content: 'pending',

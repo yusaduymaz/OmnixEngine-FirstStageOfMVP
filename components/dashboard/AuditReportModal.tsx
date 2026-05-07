@@ -6,10 +6,10 @@ import {
   TrendingUp, 
   Package, 
   Zap, 
-  ExternalLink,
-  CheckCircle2,
   SearchCode
 } from 'lucide-react'
+
+import { AuditResult } from '@/types/global'
 
 interface AuditReportModalProps {
   isOpen: boolean
@@ -17,7 +17,7 @@ interface AuditReportModalProps {
   productName: string
   price: number
   currencySymbol: string
-  result: any
+  result: AuditResult
 }
 
 export default function AuditReportModal({
@@ -76,7 +76,7 @@ export default function AuditReportModal({
                 <div className="bg-slate-50 p-4 rounded-2xl md:col-span-3">
                   <p className="text-[10px] font-bold text-slate-500 uppercase mb-2">SEO Kriterleri</p>
                   <div className="flex flex-wrap gap-2">
-                    {Object.entries(result.content?.criteriaScores || {}).map(([key, value]: [string, any]) => (
+                    {Object.entries(result.content?.criteriaScores || {}).map(([key, value]) => (
                       <div key={key} className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-100 rounded-xl">
                         <div className={`w-2 h-2 rounded-full ${value.status === 'pass' ? 'bg-green-500' : 'bg-orange-500'}`} />
                         <span className="text-[11px] font-medium text-slate-600">{value.feedback || value.message}</span>
@@ -120,7 +120,7 @@ export default function AuditReportModal({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {result.pricing?.competitors?.map((c: any, i: number) => (
+                    {result.pricing?.competitors?.map((c, i) => (
                       <tr key={i}>
                         <td className="px-4 py-3 font-medium text-slate-800">{c.seller} ({c.platform})</td>
                         <td className="px-4 py-3 font-bold text-slate-900">{c.price} {currencySymbol}</td>
@@ -162,7 +162,7 @@ export default function AuditReportModal({
                 <Zap className="text-yellow-500" size={20} /> AI Stratejik Öneri
               </h3>
               <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-[24px] text-indigo-900 text-sm leading-relaxed italic">
-                "{result.pricing?.aiFeedback || result.pricing?.ai_feedback || result.inventory?.aiInsights}"
+                &quot;{result.pricing?.aiFeedback || result.pricing?.ai_feedback || result.inventory?.aiInsights}&quot;
               </div>
             </section>
           </div>

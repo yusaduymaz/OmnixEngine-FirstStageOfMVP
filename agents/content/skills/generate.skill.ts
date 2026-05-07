@@ -363,10 +363,18 @@ export async function generateSkill(input: GenerateSkillInput): Promise<Readable
   const user = await resolveUser(input.userId, supabase)
 
   // ── 2. Kredi kontrolü (Pre-flight) ──
-  const cost = moduleCostOperations('generate') * 5000
-  const remaining = (user.credits_limit || 0) - (user.credits_used || 0)
+  const { MICRO_PER_OPERATION } = await import('@/lib/billing/credits')
+  const cost = moduleCostOperations('generate') * MICRO_PER_OPERATION
+  const creditsUsed = user.credits_used || 0
+  const creditsLimit = user.credits_limit || 0
+  const remaining = creditsLimit - creditsUsed
+
   if (remaining < cost) {
-    throw new GenerateSkillError(`Yetersiz bakiye. Bu işlem için ${moduleCostOperations('generate')} işlem hakkı gerekiyor.`, 403)
+    const requiredOps = moduleCostOperations('generate')
+    throw new GenerateSkillError(
+      `Yetersiz bakiye. Bu işlem için ${requiredOps} işlem hakkı gerekiyor. Mevcut bakiyeniz: ${Math.floor(remaining / MICRO_PER_OPERATION)} işlem.`, 
+      403
+    )
   }
 
   // ── 3. Prompt'ları hazırla ──

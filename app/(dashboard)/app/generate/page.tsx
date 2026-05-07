@@ -192,6 +192,7 @@ export default function GeneratePage() {
     }
   }, [country])
 
+  const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<GenerationResult | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [streamText, setStreamText] = useState('')
@@ -240,6 +241,7 @@ export default function GeneratePage() {
     setIsLoading(true)
     setResult(null)
     setStreamText('')
+    setError(null)
 
     try {
       const response = await fetch('/api/generate', {
@@ -376,7 +378,10 @@ export default function GeneratePage() {
       }, 100)
     } catch (err) {
       console.error('[Generate] Hata:', err)
-      alert(err instanceof Error ? err.message : 'Bir hata oluştu, tekrar deneyin.')
+      const msg = err instanceof Error ? err.message : 'Bir hata oluştu, tekrar deneyin.'
+      setError(msg)
+      // Scroll to error
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     } finally {
       setIsLoading(false)
       setStreamText('')
@@ -405,6 +410,35 @@ export default function GeneratePage() {
             <div className="px-6 py-4 border-b border-[#E8E4DC]">
               <h2 className="font-semibold text-[#1A1A2E] text-sm">Ürün Bilgileri</h2>
             </div>
+
+            {error && (
+              <div className="p-6 pb-0">
+                <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center text-red-600 shrink-0">
+                    <Zap size={16} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-red-900">İşlem Durduruldu</p>
+                    <p className="text-xs text-red-700 mt-0.5 leading-relaxed">{error}</p>
+                    {error.includes('Yetersiz bakiye') && (
+                      <a 
+                        href="/app/settings/billing" 
+                        className="inline-block mt-2 text-xs font-bold text-red-900 underline hover:no-underline"
+                      >
+                        Kredi Yükle →
+                      </a>
+                    )}
+                  </div>
+                  <button 
+                    onClick={() => setError(null)}
+                    className="text-red-400 hover:text-red-600 transition-colors"
+                  >
+                    <ChevronDown className="w-4 h-4 rotate-180" />
+                  </button>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-5">
               {/* Ürün Adı */}
               <div>

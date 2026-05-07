@@ -9,8 +9,7 @@ import { generateObject } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 import Groq from 'groq-sdk'
 import { z } from 'zod'
-import * as cheerio from 'cheerio'
-import type { AnalyzeSkillInput, AnalysisResult } from '../types/analyze.types'
+import type { AnalyzeSkillInput, AnalysisResult, CriteriaScore } from '../types/analyze.types'
 import { buildSystemPrompt, Tone } from '@/prompts/system'
 import { buildAnalyzePrompt } from '../prompts/analyze.prompt'
 
@@ -24,11 +23,51 @@ export class AnalyzeSkillError extends Error {
   }
 }
 
-async function safeScrapeUrl(url: string) {
+type ScrapedData = {
+  title: string
+  description: string
+  content: string
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message
+  return String(error)
+}
+
+function getUsageTokens(usage: unknown) {
+  if (!usage || typeof usage !== 'object') {
+    return { inputTokens: 0, outputTokens: 0 }
+  }
+
+  const usageObj = usage as Partial<Record<'promptTokens' | 'inputTokens' | 'completionTokens' | 'outputTokens', number>>
+  return {
+    inputTokens: usageObj.promptTokens ?? usageObj.inputTokens ?? 0,
+    outputTokens: usageObj.completionTokens ?? usageObj.outputTokens ?? 0,
+  }
+}
+
+function toCriteriaScore(criterion: {
+  score: number
+  status: 'pass' | 'warn' | 'fail'
+  feedback: string
+}): CriteriaScore {
+  return {
+    score: criterion.score,
+    status: criterion.status,
+    message: criterion.feedback,
+  }
+}
+
+async function safeScrapeUrl(url: string): Promise<ScrapedData> {
   try {
-    return await scrapeUrl(url)
-  } catch (err: any) {
-    throw new AnalyzeSkillError(err.message, 400)
+    const scraped = await scrapeUrl(url)
+    return {
+      title: scraped.title,
+      description: scraped.description,
+      content: scraped.content,
+    }
+  } catch (err: unknown) {
+    throw new AnalyzeSkillError(getErrorMessage(err), 400)
   }
 }
 
@@ -80,17 +119,16 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
   }
 
   // 2. Scraping
-  let scrapedData = { title: '', description: '', content: '', images: [] as string[] }
+  let scrapedData: ScrapedData = { title: '', description: '', content: '' }
   if (input.url && input.url.trim() !== '') {
     console.log(`[Analyze] URL kazınıyor: ${input.url}`)
     scrapedData = await safeScrapeUrl(input.url)
   } else {
     console.log('[Analyze] URL boş, manuel giriş olarak devam ediliyor.')
     scrapedData = {
-      title: input.productName,
+      title: input.productName ?? '',
       description: 'Manuel giriş yapıldı, sayfa kazınamadı.',
       content: '',
-      images: []
     }
   }
 
@@ -113,11 +151,6 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
   if (!openrouterKey && !groqKey) {
     throw new AnalyzeSkillError('AI servisi yapılandırılamadı (Key eksik).', 500)
   }
-
-  let resultObject: any = null
-  let inputTokens = 0
-  let outputTokens = 0
-  let modelUsed = 'openrouter/free'
 
   const schema = z.object({
     overallScore: z.number().min(0).max(100),
@@ -154,6 +187,11 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
       priority: z.enum(['high', 'medium', 'low'])
     })).min(1, 'En az bir iyileştirme önerisi üretilmelidir.')
   })
+  type AnalyzeModelResult = z.infer<typeof schema>
+  let resultObject: AnalyzeModelResult | null = null
+  let inputTokens = 0
+  let outputTokens = 0
+  let modelUsed = 'openrouter/free'
 
   try {
     if (!openrouterKey) throw new Error('OpenRouter key missing, skip to Groq')
@@ -169,11 +207,12 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
       temperature: 0.3
     })
     resultObject = object
-    inputTokens = (usage as any).promptTokens ?? (usage as any).inputTokens ?? 0
-    outputTokens = (usage as any).completionTokens ?? (usage as any).outputTokens ?? 0
+    const usageTokens = getUsageTokens(usage)
+    inputTokens = usageTokens.inputTokens
+    outputTokens = usageTokens.outputTokens
     console.log('[Analyze] Analiz tamamlandı (OpenRouter), skor:', resultObject.overallScore)
-  } catch (openrouterErr: any) {
-    console.warn('[Analyze] OpenRouter error, trying Groq fallback...', openrouterErr?.message || openrouterErr)
+  } catch (openrouterErr: unknown) {
+    console.warn('[Analyze] OpenRouter error, trying Groq fallback...', getErrorMessage(openrouterErr))
 
     try {
       if (!groqKey) {
@@ -202,15 +241,15 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
         throw new Error('Groq yanıtında JSON bulunamadı.')
       }
 
-      const parsed = JSON.parse(jsonMatch[0])
+      const parsed = schema.parse(JSON.parse(jsonMatch[0]))
       resultObject = parsed
       inputTokens = response.usage?.prompt_tokens ?? 0
       outputTokens = response.usage?.completion_tokens ?? 0
       modelUsed = 'llama-3.3-70b-versatile (Groq)'
       console.log('[Analyze] Analiz tamamlandı (Groq Llama), skor:', resultObject.overallScore)
-    } catch (groqErr: any) {
-      console.warn('[Analyze] Groq fallback error:', groqErr?.message || groqErr)
-      const errString = groqErr?.message || String(groqErr)
+    } catch (groqErr: unknown) {
+      console.warn('[Analyze] Groq fallback error:', getErrorMessage(groqErr))
+      const errString = getErrorMessage(groqErr)
       if (errString.includes('credit balance is too low') || errString.includes('quota')) {
         throw new AnalyzeSkillError('Yapay zeka API krediniz yetersiz veya kotalarınız dolmuş. Lütfen API anahtarlarınızın limitlerini kontrol edin.', 402)
       }
@@ -218,9 +257,21 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
     }
   }
 
+  if (!resultObject) {
+    throw new AnalyzeSkillError('Analiz sonucu üretilemedi.', 500)
+  }
+
   // 5. Veritabanı Kayıt ve Kredi Düşümü
   const finalResult: AnalysisResult = {
-    ...resultObject,
+    overallScore: resultObject.overallScore,
+    criteriaScores: {
+      titleQuality: toCriteriaScore(resultObject.criteriaScores.titleQuality),
+      descriptionDepth: toCriteriaScore(resultObject.criteriaScores.descriptionDepth),
+      keywordDensity: toCriteriaScore(resultObject.criteriaScores.keywordDensity),
+      legalCompliance: toCriteriaScore(resultObject.criteriaScores.legalCompliance),
+      platformRules: toCriteriaScore(resultObject.criteriaScores.platformRules),
+    },
+    suggestions: resultObject.suggestions,
     scrapedData
   }
 
@@ -233,7 +284,7 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
       scraped_data: scrapedData as unknown as Record<string, unknown>,
       overall_score: finalResult.overallScore,
       criteria_scores: finalResult.criteriaScores as unknown as Record<string, unknown>,
-      suggestions: (finalResult as any).suggestions || null,
+      suggestions: finalResult.suggestions ?? null,
       analysis_ms: Date.now() - startTime,
       credits_charged: moduleCostOperations('analyze') * 5000
     }).select('id').single()

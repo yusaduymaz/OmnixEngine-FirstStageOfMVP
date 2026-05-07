@@ -17,19 +17,18 @@ export async function POST(req: Request) {
       signature,
       process.env.STRIPE_WEBHOOK_SECRET!
     )
-  } catch (err: any) {
-    console.error(`[StripeWebhook] İmza doğrulama hatası: ${err.message}`)
+  } catch (err: unknown) {
+    const error = err as Error
+    console.error(`[StripeWebhook] İmza doğrulama hatası: ${error.message}`)
     return NextResponse.json({ error: 'Webhook Error' }, { status: 400 })
   }
-
-  const session = event.data.object as any
 
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
-        const subscriptionId = session.subscription as string
+        const session = event.data.object as Stripe.Checkout.Session
         const customerId = session.customer as string
-        const planId = session.metadata?.planId as any
+        const planId = session.metadata?.planId
 
         if (planId) {
           await handleSubscriptionChange(customerId, planId, 'active')
@@ -38,12 +37,11 @@ export async function POST(req: Request) {
       }
 
       case 'customer.subscription.updated': {
+        const session = event.data.object as Stripe.Subscription
         const status = session.status
         const customerId = session.customer as string
-        // Metadata abonelik nesnesinde olmayabilir, checkout'tan customer'a geçmiş olmalı
-        // Veya fiyata göre planı bulabiliriz. Şimdilik metadata'ya güveniyoruz.
-        const planId = session.metadata?.planId as any
-        
+        const planId = session.metadata?.planId
+
         if (planId) {
           await handleSubscriptionChange(customerId, planId, status)
         }
@@ -51,6 +49,7 @@ export async function POST(req: Request) {
       }
 
       case 'customer.subscription.deleted': {
+        const session = event.data.object as Stripe.Subscription
         const customerId = session.customer as string
         await handleSubscriptionChange(customerId, 'trial', 'canceled')
         break
@@ -58,8 +57,9 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ received: true })
-  } catch (err: any) {
-    console.error(`[StripeWebhook] İşlem hatası: ${err.message}`)
+  } catch (err: unknown) {
+    const error = err as Error
+    console.error(`[StripeWebhook] İşlem hatası: ${error.message}`)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }

@@ -3,6 +3,7 @@
  * Bu scripti çalıştırmak için: 
  * node --env-file=.env.local scratch/check_audits.js
  */
+/* eslint-disable @typescript-eslint/no-require-imports */
 const { createClient } = require('@supabase/supabase-js');
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

@@ -434,11 +434,11 @@ export default function LibraryClient({
                     <AnalysisModal
                       id={analysis.id}
                       sourceUrl={analysis.source_url}
-                      sourcePlatform={analysis.source_platform}
+                      sourcePlatform={analysis.source_platform ?? undefined}
                       targetPlatforms={analysis.target_platform}
-                      overallScore={analysis.overall_score}
-                      criteriaScores={analysis.criteria_scores as any}
-                      suggestions={(analysis as any).suggestions}
+                      overallScore={analysis.overall_score ?? 0}
+                      criteriaScores={analysis.criteria_scores ?? {}}
+                      suggestions={analysis.suggestions ?? []}
                       onDeleted={handleDeleted}
                     />
                     <Link

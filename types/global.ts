@@ -195,3 +195,32 @@ export interface ReorderSuggestion {
   suggestedQuantity: number
   urgency: 'low' | 'medium' | 'high' | 'critical'
 }
+
+// ═══════════════════════════════════════════════════════
+// Denetim (Audit) Tipleri
+// ═══════════════════════════════════════════════════════
+
+export interface AuditResult {
+  content?: {
+    overallScore: number
+    criteriaScores: Record<string, { status: string; feedback?: string; message?: string }>
+  }
+  pricing?: {
+    overallScore?: number
+    suggestedPrice?: number
+    suggested_price?: number
+    marketPosition?: string
+    market_position?: string
+    competitors?: Array<{ seller: string; platform: string; price: number }>
+    aiFeedback?: string
+    ai_feedback?: string
+  }
+  inventory?: {
+    daysToStockout?: number
+    stockoutPrediction?: string
+    recommendation?: { reason: string }
+    restockSuggestion?: string
+    stockHealth?: string
+    aiInsights?: string
+  }
+}

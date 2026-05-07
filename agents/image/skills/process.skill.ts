@@ -4,7 +4,7 @@ import { moduleCostOperations } from '@/lib/billing/credits'
 import { currentUser } from '@clerk/nextjs/server'
 import { fal } from '@fal-ai/client'
 import { v4 as uuidv4 } from 'uuid'
-import type { ImageProcessInput, ImageProcessResult } from '../types/process.types'
+import type { ImageAction, ImageProcessInput, ImageProcessResult } from '../types/process.types'
 
 export class ImageProcessError extends Error {
   constructor(message: string, public readonly statusCode: number = 500) {
@@ -75,17 +75,23 @@ async function uploadToStorage(supabase: ReturnType<typeof getSupabaseAdmin>, pa
   return data.publicUrl
 }
 
+function getCreditModuleByAction(action: ImageAction) {
+  if (action === 'remove-background') return 'image_bg' as const
+  return 'image_studio' as const
+}
+
 export async function processImageSkill(input: ImageProcessInput): Promise<ImageProcessResult> {
   const startTime = Date.now()
   const supabase = getSupabaseAdmin()
 
   // 1. Kullanıcı ve Kredi Kontrolü
   const user = await resolveUser(input.userId, supabase)
-  const cost = moduleCostOperations('image') * 5000
+  const creditModule = getCreditModuleByAction(input.action)
+  const cost = moduleCostOperations(creditModule) * 5000
   
   const remaining = (user.credits_limit || 0) - (user.credits_used || 0)
   if (remaining < cost) {
-    throw new ImageProcessError(`Bu işlem için ${moduleCostOperations('image')} işlem hakkına ihtiyacınız var. Krediniz yetersiz.`, 403)
+    throw new ImageProcessError(`Bu işlem için ${moduleCostOperations(creditModule)} işlem hakkına ihtiyacınız var. Krediniz yetersiz.`, 403)
   }
 
   // UUID oluştur
@@ -166,7 +172,7 @@ export async function processImageSkill(input: ImageProcessInput): Promise<Image
     if (saveError) throw saveError
 
     // Kredi Düşümü
-    await chargeCredits(input.userId, 'image', savedImage.id)
+    await chargeCredits(input.userId, creditModule, savedImage.id)
   } catch (err) {
     console.error('[Image] DB kayıt/kredi düşümü hatası:', err)
   }

@@ -7,6 +7,7 @@ import type { PlatformId } from '@/prompts/system'
 export interface AnalyzeSkillInput {
   userId: string
   url: string
+  productName?: string
   platforms: PlatformId[]
 }
 
@@ -27,8 +28,14 @@ export interface AnalysisResult {
     titleQuality: CriteriaScore
     descriptionDepth: CriteriaScore
     keywordDensity: CriteriaScore
+    legalCompliance: CriteriaScore
     platformRules: CriteriaScore
   }
+  suggestions?: Array<{
+    title: string
+    description: string
+    priority: 'high' | 'medium' | 'low'
+  }>
   scrapedData?: {
     title: string
     description: string

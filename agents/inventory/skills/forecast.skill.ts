@@ -3,6 +3,7 @@ import { generateObject } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 import { z } from 'zod'
 import { chargeCredits } from '@/lib/billing/charge'
+import { tokensToCredits, tokensToUsd } from '@/lib/billing/credit-cost'
 import { moduleCostOperations } from '@/lib/billing/credits'
 import { InventorySkillInput, InventoryResult, StockHealth, InventoryRecommendation } from '../types'
 

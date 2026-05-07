@@ -14,11 +14,13 @@ export async function GET() {
 
     // 1. Kullanıcının UUID'sini al (lazy upsert)
     console.log('[Audits API] Clerk ID aranıyor:', userId)
-    let { data: user, error: userError } = await supabase
+    const { data: userData, error: userError } = await supabase
       .from('users')
       .select('id')
       .eq('clerk_id', userId)
       .maybeSingle()
+
+    let user = userData
 
     if (userError) {
       console.error('[Audits API] Sorgu hatası:', userError)

@@ -187,7 +187,7 @@ export default function AnalyzerPage() {
         body: JSON.stringify({ ...data, platforms }),
       })
 
-      const resData = await response.json()
+      const resData = await response.json() as AnalysisResult & { hata?: string }
 
       if (!response.ok) {
         throw new Error(resData.hata || 'Analiz başarısız oldu')
@@ -195,9 +195,10 @@ export default function AnalyzerPage() {
 
       setResult(resData)
       window.scrollTo({ top: 400, behavior: 'smooth' })
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('[Analyze] Hata:', err)
-      alert(err instanceof Error ? err.message : 'Bir hata oluştu, tekrar deneyin.')
+      const error = err as Error
+      alert(error.message || 'Bir hata oluştu, tekrar deneyin.')
     } finally {
       setIsLoading(false)
     }
@@ -213,7 +214,7 @@ export default function AnalyzerPage() {
           İçerik Analizörü
         </h1>
         <p className="text-[#6B6B7B] text-sm mt-0.5">
-          Ürün sayfanızın URL'sini girin — SEO skoru, platform kriter analizi ve iyileştirme önerileri alın.
+          Ürün sayfanızın URL&apos;sini girin — SEO skoru, platform kriter analizi ve iyileştirme önerileri alın.
         </p>
       </div>
 
@@ -228,7 +229,7 @@ export default function AnalyzerPage() {
               {/* URL */}
               <div>
                 <label className="block text-sm font-medium text-[#1A1A2E] mb-1.5">
-                  Ürün Sayfası URL'si <span className="text-[#FF6B35]">*</span>
+                  Ürün Sayfası URL&apos;si <span className="text-[#FF6B35]">*</span>
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">

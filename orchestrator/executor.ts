@@ -9,6 +9,11 @@ import { analyzeSkill } from '@/agents/content/skills/analyze.skill'
 import { pricingSkill } from '@/agents/pricing/skills/competitor.skill'
 import { inventorySkill } from '@/agents/inventory/skills/forecast.skill'
 import { getSupabaseAdmin } from '@/lib/supabase/server'
+
+// Agent Sonuç Tipleri
+import type { AnalysisResult } from '@/agents/content/types/analyze.types'
+import type { PricingResult } from '@/agents/pricing/types/index'
+import type { InventoryResult } from '@/agents/inventory/types/index'
 // import { processImage } from '@/agents/image/skills/process.skill' // Geliştirme aşamasında
 
 // ═══════════════════════════════════════════════════════
@@ -73,7 +78,7 @@ async function executeAgent(
     }
 
     return { agent: route.agent, result: { status: 'unsupported_skill' } }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`[Orchestrator] ${route.agent} hatası:`, error)
     throw error
   }
@@ -120,41 +125,49 @@ export async function executeParallel(
       const supabase = getSupabaseAdmin()
       const { productData, userId } = context
 
-      // 1. Kullanıcıyı resolve et
-      const { data: user, error: userErr } = await supabase
-        .from('users')
-        .select('id')
-        .eq('clerk_id', userId)
-        .single()
-
-      if (userErr || !user) {
-        console.error('[Orchestrator] Kullanıcı bulunamadı, kayıt iptal edildi:', userErr)
+      if (!productData || !userId) {
+        console.error('[Orchestrator] Context eksik olduğu için audit kaydı atlandı.')
       } else {
-        const auditRecord = {
-          user_id: user.id,
-          product_name: productData.name,
-          product_price: Number(productData.price) || 0,
-          product_url: productData.url || null,
-          currency: productData.currency || 'TRY',
-          analysis_id: (results.content as any)?.id || null,
-          pricing_id: (results.pricing as any)?.id || null,
-          inventory_id: (results.inventory as any)?.id || null,
-          seo_score: Number((results.content as any)?.overallScore) || 0,
-          pricing_score: Number((results.pricing as any)?.overallScore) || 0,
-          inventory_status: (results.inventory as any)?.stockHealth || 'unknown'
-        }
+        // 1. Kullanıcıyı resolve et
+        const { data: user, error: userErr } = await supabase
+          .from('users')
+          .select('id')
+          .eq('clerk_id', userId)
+          .single()
 
-        console.log('[Orchestrator] DB Insert Denemesi:', auditRecord)
-
-        const { error: insertErr, data: insertData } = await supabase
-          .from('audits')
-          .insert(auditRecord)
-          .select()
-
-        if (insertErr) {
-          console.error('[Orchestrator] Audit tablosuna kayıt başarısız:', insertErr)
+        if (userErr || !user) {
+          console.error('[Orchestrator] Kullanıcı bulunamadı, kayıt iptal edildi:', userErr)
         } else {
-          console.log('[Orchestrator] Audit raporu kütüphaneye başarıyla kaydedildi:', insertData?.[0]?.id)
+          const contentRes = results.content as AnalysisResult | undefined
+          const pricingRes = results.pricing as PricingResult | undefined
+          const inventoryRes = results.inventory as InventoryResult | undefined
+
+          const auditRecord = {
+            user_id: user.id,
+            product_name: productData.name,
+            product_price: Number(productData.price) || 0,
+            product_url: productData.url || null,
+            currency: productData.currency || 'TRY',
+            analysis_id: contentRes?.id || null,
+            pricing_id: pricingRes?.id || null,
+            inventory_id: inventoryRes?.id || null,
+            seo_score: Number(contentRes?.overallScore) || 0,
+            pricing_score: Number(pricingRes?.overallScore) || 0,
+            inventory_status: inventoryRes?.stockHealth || 'unknown'
+          }
+
+          console.log('[Orchestrator] DB Insert Denemesi:', auditRecord)
+
+          const { error: insertErr, data: insertData } = await supabase
+            .from('audits')
+            .insert(auditRecord)
+            .select()
+
+          if (insertErr) {
+            console.error('[Orchestrator] Audit tablosuna kayıt başarısız:', insertErr)
+          } else {
+            console.log('[Orchestrator] Audit raporu kütüphaneye başarıyla kaydedildi:', insertData?.[0]?.id)
+          }
         }
       }
     } catch (err) {

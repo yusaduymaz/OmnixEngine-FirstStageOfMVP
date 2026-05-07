@@ -2,21 +2,19 @@
 
 import { useState } from 'react'
 import { 
-  TrendingUp, 
-  DollarSign, 
-  Search, 
-  Target, 
-  BarChart3, 
-  Percent, 
-  Truck, 
-  ShieldCheck, 
+  TrendingUp,
+  DollarSign,
+  Search,
+  Target,
+  BarChart3,
+  Percent,
+  Truck,
+  ShieldCheck,
   ArrowRight,
   Loader2,
   AlertCircle,
   ExternalLink,
-  ChevronRight,
-  Zap,
-  Info
+  Zap
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { PricingResult } from '@/agents/pricing/types'
@@ -77,8 +75,9 @@ export default function PricingPage() {
 
       const data = await res.json()
       setResult(data)
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      const error = err as Error
+      setError(error.message)
     } finally {
       setLoading(false)
     }
@@ -230,7 +229,7 @@ export default function PricingPage() {
                 <div>
                   <h4 className="text-sm font-bold text-white/60">Önerilen Satış Fiyatı</h4>
                   <p className="text-2xl font-bold text-white">
-                    {(result.suggestedPrice || (result as any).suggested_price || 0).toLocaleString('tr-TR')} 
+                    {(result.suggestedPrice || 0).toLocaleString('tr-TR')} 
                     <span className="text-sm opacity-60"> {currencyInfo.code}</span>
                   </p>
                 </div>
@@ -339,7 +338,7 @@ export default function PricingPage() {
                     <h4 className="font-bold text-indigo-900 text-sm">Yapay Zeka Analizi</h4>
                   </div>
                   <p className="text-sm text-indigo-800/80 leading-relaxed italic">
-                    "{result.aiFeedback}"
+                    &quot;{result.aiFeedback}&quot;
                   </p>
                 </div>
               </div>

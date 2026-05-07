@@ -51,10 +51,11 @@ export async function POST(req: Request) {
       errors: Object.keys(errors).length > 0 ? errors : undefined
     })
 
-  } catch (error: any) {
-    console.error('[Orchestrator API] Genel Hata:', error)
+  } catch (error: unknown) {
+    const err = error as Error
+    console.error('[Orchestrator API] Genel Hata:', err)
     return Response.json(
-      { error: error.message || 'Denetim sırasında bir hata oluştu.' },
+      { error: err.message || 'Denetim sırasında bir hata oluştu.' },
       { status: 500 }
     )
   }

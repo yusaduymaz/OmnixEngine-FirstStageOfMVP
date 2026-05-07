@@ -2,7 +2,7 @@
 
 import { useAuth } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 
 /**
  * Giriş yapmış kullanıcıyı /app'e yönlendiren bileşen.
@@ -11,16 +11,15 @@ import { useEffect, useState } from 'react'
 export default function AuthRedirect() {
   const { isSignedIn, isLoaded } = useAuth()
   const router = useRouter()
-  const [redirecting, setRedirecting] = useState(false)
+  const isRedirecting = isLoaded && isSignedIn
 
   useEffect(() => {
-    if (isLoaded && isSignedIn) {
-      setRedirecting(true)
+    if (isRedirecting) {
       router.replace('/app')
     }
-  }, [isLoaded, isSignedIn, router])
+  }, [isRedirecting, router])
 
-  if (!redirecting) return null
+  if (!isRedirecting) return null
 
   return (
     <div className="fixed inset-0 z-[100] bg-[#F8F7F4]/95 backdrop-blur-sm flex items-center justify-center">
