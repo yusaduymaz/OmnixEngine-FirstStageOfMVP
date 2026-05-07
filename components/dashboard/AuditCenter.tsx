@@ -365,14 +365,16 @@ export default function AuditCenter() {
       )}
 
       {/* ── DETAYLI RAPOR MODALI ── */}
-      <AuditReportModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        productName={productName}
-        price={Number(price)}
-        currencySymbol={currencyInfo.symbol}
-        result={result}
-      />
+      {result && (
+        <AuditReportModal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          productName={productName}
+          price={Number(price)}
+          currencySymbol={currencyInfo.symbol}
+          result={result}
+        />
+      )}
     </div>
   )
 }
