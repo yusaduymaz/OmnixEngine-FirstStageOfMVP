@@ -21,7 +21,16 @@ import {
   Receipt,
   FileText,
   Briefcase,
+  MessageSquare,
+  Mail,
+  CheckCircle2,
+  Clock,
+  Paperclip,
+  Send,
+  AlertCircle,
 } from 'lucide-react'
+import { formatDistanceToNow, format } from 'date-fns'
+import { tr } from 'date-fns/locale'
 
 interface User {
   id: string
@@ -54,11 +63,37 @@ interface SiteSetting {
   updated_at: string
 }
 
+interface SupportTicket {
+  id: string
+  user_id: string
+  category: string
+  subject: string
+  message: string
+  attachment_path: string | null
+  attachment_name: string | null
+  attachment_size: number | null
+  attachment_type: string | null
+  status: 'open' | 'in_progress' | 'resolved' | 'closed'
+  priority: 'low' | 'normal' | 'high' | 'urgent'
+  is_read: boolean
+  admin_response: string | null
+  responded_at: string | null
+  created_at: string
+  updated_at: string
+  user?: {
+    id: string
+    email: string
+    full_name: string | null
+    plan: string
+  }
+}
+
 interface Props {
   users: User[]
   stats: { totalUsers: number; totalCreditsUsed: number; newThisMonth: number; planCounts: Record<string, number> }
   recentTransactions: Transaction[]
   siteSettings: SiteSetting[]
+  supportTickets?: SupportTicket[]
 }
 
 const PLANS = ['trial', 'starter', 'growth', 'agency', 'enterprise'] as const
@@ -71,11 +106,11 @@ const PLAN_COLORS: Record<string, string> = {
   enterprise: 'text-green-700 bg-green-50',
 }
 
-type Tab = 'overview' | 'users' | 'content' | 'transactions'
+type Tab = 'overview' | 'users' | 'content' | 'transactions' | 'support'
 
-const TAB_VALUES: Tab[] = ['overview', 'users', 'content', 'transactions']
+const TAB_VALUES: Tab[] = ['overview', 'users', 'content', 'transactions', 'support']
 
-export default function AdminDashboardClient({ users: initialUsers, stats, recentTransactions, siteSettings }: Props) {
+export default function AdminDashboardClient({ users: initialUsers, stats, recentTransactions, siteSettings, supportTickets: initialTickets = [] }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -161,6 +196,7 @@ export default function AdminDashboardClient({ users: initialUsers, stats, recen
           { id: 'users', label: 'Kullanıcılar', icon: <Users size={14} /> },
           { id: 'content', label: 'İçerik', icon: <FileText size={14} /> },
           { id: 'transactions', label: 'İşlemler', icon: <Receipt size={14} /> },
+          { id: 'support', label: 'Destek', icon: <MessageSquare size={14} /> },
         ] as { id: Tab; label: string; icon: React.ReactNode }[]).map((t) => (
           <button
             key={t.id}
@@ -191,6 +227,8 @@ export default function AdminDashboardClient({ users: initialUsers, stats, recen
       {tab === 'content' && <SiteContentTab settings={siteSettings} />}
 
       {tab === 'transactions' && <TransactionsTab transactions={recentTransactions} users={users} />}
+
+      {tab === 'support' && <SupportTab initialTickets={initialTickets} />}
 
       {selectedUserId && (
         <UserDetailModal
@@ -757,6 +795,428 @@ function MiniStat({ value, label }: { value: number; label: string }) {
     <div className="rounded-lg bg-white border border-[#E8E4DC] p-3 text-center">
       <p className="text-lg font-bold text-[#1A1A2E]">{value}</p>
       <p className="text-[10px] uppercase tracking-wider text-[#9E9EA8] font-semibold">{label}</p>
+    </div>
+  )
+}
+
+// ─── Destek Sekmesi ────────────────────────────────────────────────────────
+
+const TICKET_CATEGORIES: Record<string, { label: string; color: string }> = {
+  technical: { label: 'Teknik', color: 'bg-blue-100 text-blue-700' },
+  billing: { label: 'Fatura', color: 'bg-green-100 text-green-700' },
+  feature: { label: 'Özellik', color: 'bg-purple-100 text-purple-700' },
+  bug: { label: 'Hata', color: 'bg-red-100 text-red-700' },
+  account: { label: 'Hesap', color: 'bg-yellow-100 text-yellow-700' },
+  other: { label: 'Diğer', color: 'bg-gray-100 text-gray-700' },
+}
+
+const TICKET_STATUSES: Record<string, { label: string; color: string }> = {
+  open: { label: 'Açık', color: 'bg-blue-100 text-blue-700' },
+  in_progress: { label: 'İşlemde', color: 'bg-yellow-100 text-yellow-700' },
+  resolved: { label: 'Çözüldü', color: 'bg-green-100 text-green-700' },
+  closed: { label: 'Kapalı', color: 'bg-gray-100 text-gray-700' },
+}
+
+const TICKET_PRIORITIES: Record<string, { label: string; color: string }> = {
+  low: { label: 'Düşük', color: 'bg-gray-100 text-gray-600' },
+  normal: { label: 'Normal', color: 'bg-blue-100 text-blue-600' },
+  high: { label: 'Yüksek', color: 'bg-orange-100 text-orange-600' },
+  urgent: { label: 'Acil', color: 'bg-red-100 text-red-600' },
+}
+
+function SupportTab({ initialTickets }: { initialTickets: SupportTicket[] }) {
+  const [tickets, setTickets] = useState<SupportTicket[]>(initialTickets)
+  const [loading, setLoading] = useState(false)
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [categoryFilter, setCategoryFilter] = useState<string>('all')
+  const [readFilter, setReadFilter] = useState<string>('all')
+  const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null)
+
+  const fetchTickets = useCallback(async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams()
+      if (statusFilter !== 'all') params.set('status', statusFilter)
+      if (categoryFilter !== 'all') params.set('category', categoryFilter)
+      if (readFilter !== 'all') params.set('is_read', readFilter)
+      params.set('limit', '50')
+
+      const res = await fetch(`/api/admin/support?${params.toString()}`)
+      if (res.ok) {
+        const data = await res.json()
+        setTickets(data.tickets ?? [])
+      }
+    } catch {
+      // Sessiz hata
+    } finally {
+      setLoading(false)
+    }
+  }, [statusFilter, categoryFilter, readFilter])
+
+  useEffect(() => {
+    fetchTickets()
+  }, [fetchTickets])
+
+  const unreadCount = tickets.filter((t) => !t.is_read).length
+
+  return (
+    <div className="space-y-4">
+      {/* İstatistikler */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="rounded-xl border border-[#E8E4DC] bg-white p-4">
+          <p className="text-2xl font-bold text-[#1A1A2E]">{tickets.length}</p>
+          <p className="text-xs text-[#6B6B7B]">Toplam Ticket</p>
+        </div>
+        <div className="rounded-xl border border-[#E8E4DC] bg-white p-4">
+          <p className="text-2xl font-bold text-blue-600">{tickets.filter((t) => t.status === 'open').length}</p>
+          <p className="text-xs text-[#6B6B7B]">Açık</p>
+        </div>
+        <div className="rounded-xl border border-[#E8E4DC] bg-white p-4">
+          <p className="text-2xl font-bold text-[#FF6B35]">{unreadCount}</p>
+          <p className="text-xs text-[#6B6B7B]">Okunmamış</p>
+        </div>
+        <div className="rounded-xl border border-[#E8E4DC] bg-white p-4">
+          <p className="text-2xl font-bold text-green-600">{tickets.filter((t) => t.status === 'resolved').length}</p>
+          <p className="text-xs text-[#6B6B7B]">Çözüldü</p>
+        </div>
+      </div>
+
+      {/* Filtreler */}
+      <div className="flex flex-wrap gap-2 items-center">
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="h-10 px-3 rounded-xl border border-[#E8E4DC] bg-white text-sm outline-none"
+        >
+          <option value="all">Tüm Durumlar</option>
+          <option value="open">Açık</option>
+          <option value="in_progress">İşlemde</option>
+          <option value="resolved">Çözüldü</option>
+          <option value="closed">Kapalı</option>
+        </select>
+        <select
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          className="h-10 px-3 rounded-xl border border-[#E8E4DC] bg-white text-sm outline-none"
+        >
+          <option value="all">Tüm Kategoriler</option>
+          <option value="technical">Teknik</option>
+          <option value="billing">Fatura</option>
+          <option value="feature">Özellik</option>
+          <option value="bug">Hata</option>
+          <option value="account">Hesap</option>
+          <option value="other">Diğer</option>
+        </select>
+        <select
+          value={readFilter}
+          onChange={(e) => setReadFilter(e.target.value)}
+          className="h-10 px-3 rounded-xl border border-[#E8E4DC] bg-white text-sm outline-none"
+        >
+          <option value="all">Tümü</option>
+          <option value="false">Okunmamış</option>
+          <option value="true">Okunmuş</option>
+        </select>
+        <button
+          onClick={fetchTickets}
+          disabled={loading}
+          className="h-10 px-4 rounded-xl bg-[#F8F7F4] border border-[#E8E4DC] text-sm font-medium hover:bg-[#FFF2EC] disabled:opacity-50 inline-flex items-center gap-1.5"
+        >
+          <RotateCcw size={14} className={loading ? 'animate-spin' : ''} /> Yenile
+        </button>
+      </div>
+
+      {/* Ticket Tablosu */}
+      <div className="rounded-2xl border border-[#E8E4DC] bg-white shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#E8E4DC] bg-[#F8F7F4]">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B6B7B] uppercase tracking-wide">Kullanıcı</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B6B7B] uppercase tracking-wide">Kategori</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B6B7B] uppercase tracking-wide">Konu</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B6B7B] uppercase tracking-wide">Durum</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B6B7B] uppercase tracking-wide">Tarih</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-[#6B6B7B] uppercase tracking-wide">İşlem</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E8E4DC]">
+              {tickets.map((ticket) => (
+                <tr
+                  key={ticket.id}
+                  className={`hover:bg-[#FAFAFD] transition-colors cursor-pointer ${!ticket.is_read ? 'bg-[#FFF2EC]/30' : ''}`}
+                  onClick={() => setSelectedTicket(ticket)}
+                >
+                  <td className="px-4 py-3">
+                    <p className="font-medium text-[#1A1A2E]">{ticket.user?.email ?? '—'}</p>
+                    {ticket.user?.full_name && <p className="text-xs text-[#9E9EA8]">{ticket.user.full_name}</p>}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${TICKET_CATEGORIES[ticket.category]?.color ?? 'bg-gray-100 text-gray-700'}`}>
+                      {TICKET_CATEGORIES[ticket.category]?.label ?? ticket.category}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      {!ticket.is_read && <span className="w-2 h-2 rounded-full bg-[#FF6B35]" />}
+                      <span className="text-[#1A1A2E] truncate max-w-[200px]">{ticket.subject}</span>
+                      {ticket.attachment_path && <Paperclip size={12} className="text-[#9E9EA8]" />}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${TICKET_STATUSES[ticket.status]?.color ?? ''}`}>
+                      {TICKET_STATUSES[ticket.status]?.label ?? ticket.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-xs text-[#9E9EA8]">
+                    {formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true, locale: tr })}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSelectedTicket(ticket)
+                      }}
+                      className="inline-flex items-center gap-1 rounded-lg bg-[#F8F7F4] hover:bg-[#FFF2EC] px-3 py-1.5 text-xs font-semibold text-[#1A1A2E] transition-colors"
+                    >
+                      <Eye size={12} /> Detay
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {tickets.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-4 py-8 text-center text-sm text-[#9E9EA8]">
+                    {loading ? 'Yükleniyor...' : 'Ticket bulunamadı.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Ticket Detay Modalı */}
+      {selectedTicket && (
+        <TicketDetailModal
+          ticket={selectedTicket}
+          onClose={() => setSelectedTicket(null)}
+          onUpdate={(updated) => {
+            setTickets((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
+            setSelectedTicket(updated)
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+// ─── Ticket Detay Modalı ───────────────────────────────────────────────────
+
+function TicketDetailModal({
+  ticket,
+  onClose,
+  onUpdate,
+}: {
+  ticket: SupportTicket
+  onClose: () => void
+  onUpdate: (ticket: SupportTicket) => void
+}) {
+  const [status, setStatus] = useState(ticket.status)
+  const [priority, setPriority] = useState(ticket.priority)
+  const [response, setResponse] = useState(ticket.admin_response ?? '')
+  const [saving, setSaving] = useState(false)
+  const [msg, setMsg] = useState<string | null>(null)
+
+  // Modalı açınca okundu olarak işaretle
+  useEffect(() => {
+    if (!ticket.is_read) {
+      fetch(`/api/admin/support/${ticket.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_read: true }),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.ticket) onUpdate(data.ticket)
+        })
+        .catch(() => {})
+    }
+  }, [ticket.id, ticket.is_read, onUpdate])
+
+  const handleSave = async () => {
+    setSaving(true)
+    setMsg(null)
+    try {
+      const res = await fetch(`/api/admin/support/${ticket.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status,
+          priority,
+          admin_response: response || undefined,
+        }),
+      })
+      const data = await res.json()
+      if (res.ok && data.ticket) {
+        setMsg('Kaydedildi')
+        onUpdate(data.ticket)
+      } else {
+        setMsg(`Hata: ${data.hata ?? 'Bilinmeyen hata'}`)
+      }
+    } catch {
+      setMsg('Bağlantı hatası')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-[#1A1A2E]/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="sticky top-0 bg-white border-b border-[#E8E4DC] px-6 py-4 flex items-center justify-between">
+          <div>
+            <h2 className="font-bold text-[#1A1A2E] flex items-center gap-2">
+              <MessageSquare size={16} className="text-[#FF6B35]" />
+              Ticket Detayı
+            </h2>
+            <p className="text-xs text-[#6B6B7B] mt-0.5">{ticket.subject}</p>
+          </div>
+          <button onClick={onClose} className="text-[#6B6B7B] hover:text-[#1A1A2E]">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {/* Kullanıcı Bilgisi */}
+          <div className="rounded-xl border border-[#E8E4DC] bg-[#FAFAFD] p-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="font-bold text-[#1A1A2E]">{ticket.user?.full_name ?? ticket.user?.email ?? '—'}</p>
+                <p className="text-sm text-[#6B6B7B]">{ticket.user?.email}</p>
+                {ticket.user?.plan && (
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold mt-1 ${PLAN_COLORS[ticket.user.plan] ?? 'bg-gray-100 text-gray-700'}`}>
+                    {ticket.user.plan}
+                  </span>
+                )}
+              </div>
+              <div className="text-right text-xs text-[#9E9EA8]">
+                <p>{format(new Date(ticket.created_at), 'dd MMM yyyy HH:mm', { locale: tr })}</p>
+                <div className="flex items-center gap-2 mt-1 justify-end">
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${TICKET_CATEGORIES[ticket.category]?.color ?? ''}`}>
+                    {TICKET_CATEGORIES[ticket.category]?.label ?? ticket.category}
+                  </span>
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${TICKET_PRIORITIES[ticket.priority]?.color ?? ''}`}>
+                    {TICKET_PRIORITIES[ticket.priority]?.label ?? ticket.priority}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Mesaj */}
+          <div>
+            <p className="text-xs uppercase tracking-wider text-[#9E9EA8] font-bold mb-2">Mesaj</p>
+            <div className="bg-[#F8F7F4] rounded-xl p-4">
+              <p className="text-sm text-[#1A1A2E] whitespace-pre-wrap">{ticket.message}</p>
+            </div>
+          </div>
+
+          {/* Dosya Eki */}
+          {ticket.attachment_path && (
+            <div>
+              <p className="text-xs uppercase tracking-wider text-[#9E9EA8] font-bold mb-2">Dosya Eki</p>
+              <a
+                href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/support-attachments/${ticket.attachment_path}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-[#FAFAFD] border border-[#E8E4DC] rounded-xl px-4 py-2 text-sm text-[#1A1A2E] hover:border-[#FF6B35] transition-colors"
+              >
+                <Paperclip size={14} />
+                {ticket.attachment_name ?? 'Dosya'}
+              </a>
+            </div>
+          )}
+
+          {/* Durum ve Öncelik */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-[#6B6B7B] uppercase tracking-wide">Durum</label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as typeof status)}
+                className="h-10 w-full rounded-xl border border-[#E8E4DC] bg-white px-3 text-sm outline-none focus:border-[#FF6B35]/60"
+              >
+                <option value="open">Açık</option>
+                <option value="in_progress">İşlemde</option>
+                <option value="resolved">Çözüldü</option>
+                <option value="closed">Kapalı</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-[#6B6B7B] uppercase tracking-wide">Öncelik</label>
+              <select
+                value={priority}
+                onChange={(e) => setPriority(e.target.value as typeof priority)}
+                className="h-10 w-full rounded-xl border border-[#E8E4DC] bg-white px-3 text-sm outline-none focus:border-[#FF6B35]/60"
+              >
+                <option value="low">Düşük</option>
+                <option value="normal">Normal</option>
+                <option value="high">Yüksek</option>
+                <option value="urgent">Acil</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Admin Yanıtı */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-[#6B6B7B] uppercase tracking-wide">
+              Admin Yanıtı
+              {ticket.responded_at && (
+                <span className="ml-2 font-normal normal-case text-[#9E9EA8]">
+                  (Son yanıt: {formatDistanceToNow(new Date(ticket.responded_at), { addSuffix: true, locale: tr })})
+                </span>
+              )}
+            </label>
+            <textarea
+              value={response}
+              onChange={(e) => setResponse(e.target.value)}
+              rows={5}
+              placeholder="Kullanıcıya yanıtınızı yazın..."
+              className="w-full rounded-xl border border-[#E8E4DC] bg-white px-3 py-3 text-sm text-[#1A1A2E] placeholder:text-[#9E9EA8] outline-none focus:border-[#FF6B35]/60 resize-none"
+            />
+            <p className="text-xs text-[#9E9EA8]">
+              Yanıt kaydedildiğinde kullanıcıya otomatik email gönderilir.
+            </p>
+          </div>
+
+          {/* Mesaj */}
+          {msg && (
+            <p className={`text-sm rounded-xl border px-3 py-2 ${msg.startsWith('Hata') ? 'border-red-200 bg-red-50 text-red-700' : 'border-green-200 bg-green-50 text-green-700'}`}>
+              {msg.startsWith('Hata') ? <AlertCircle size={14} className="inline mr-1" /> : <CheckCircle2 size={14} className="inline mr-1" />}
+              {msg}
+            </p>
+          )}
+
+          {/* Aksiyonlar */}
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#E8E4DC]">
+            <button
+              onClick={onClose}
+              className="rounded-xl border border-[#E8E4DC] px-4 py-2 text-sm font-semibold text-[#1A1A2E] hover:bg-[#F8F7F4]"
+            >
+              Kapat
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#FF6B35] text-white px-4 py-2 text-sm font-bold hover:bg-[#e85d2a] disabled:opacity-50"
+            >
+              {saving ? <RotateCcw size={14} className="animate-spin" /> : <Send size={14} />}
+              {response && response !== ticket.admin_response ? 'Yanıtla ve Kaydet' : 'Kaydet'}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

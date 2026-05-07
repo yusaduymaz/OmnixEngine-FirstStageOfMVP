@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function TeamSettingsPage() {
   const { userId } = await auth()
-  if (!userId) redirect('/login')
+  if (!userId) redirect('/sign-in')
 
   const supabase = getSupabaseAdmin()
 
@@ -35,7 +35,7 @@ export default async function TeamSettingsPage() {
             satış ekibimizle iletişime geçin.
           </p>
           <a
-            href="/contact?plan=enterprise"
+            href="/iletisim?plan=enterprise"
             className="inline-flex items-center gap-2 rounded-xl bg-[#FF6B35] text-white px-4 py-2 text-sm font-bold hover:bg-[#e85d2a]"
           >
             Enterprise için iletişim

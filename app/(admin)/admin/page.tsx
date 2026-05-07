@@ -10,6 +10,7 @@ async function getAdminData() {
     { data: creditSum },
     { data: recentTransactions },
     { data: siteSettings },
+    { data: supportTickets },
   ] = await Promise.all([
     supabase
       .from('users')
@@ -25,6 +26,11 @@ async function getAdminData() {
       .order('created_at', { ascending: false })
       .limit(50),
     supabase.from('site_settings').select('key, value, description, updated_at').order('key'),
+    supabase
+      .from('support_tickets')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50),
   ])
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
@@ -41,6 +47,18 @@ async function getAdminData() {
 
   const totalCreditsUsed = creditSum?.reduce((acc, u) => acc + (u.credits_used ?? 0), 0) ?? 0
 
+  // Ticket'lar için kullanıcı bilgilerini ekle
+  const userIds = [...new Set(supportTickets?.map((t) => t.user_id) ?? [])]
+  let ticketsWithUsers = supportTickets ?? []
+  if (userIds.length > 0) {
+    const { data: ticketUsers } = await supabase
+      .from('users')
+      .select('id, email, full_name, plan')
+      .in('id', userIds)
+    const usersMap = ticketUsers?.reduce((acc, u) => ({ ...acc, [u.id]: u }), {} as Record<string, { id: string; email: string; full_name: string | null; plan: string }>) ?? {}
+    ticketsWithUsers = supportTickets?.map((t) => ({ ...t, user: usersMap[t.user_id] ?? null })) ?? []
+  }
+
   return {
     users: users ?? [],
     stats: {
@@ -51,6 +69,7 @@ async function getAdminData() {
     },
     recentTransactions: recentTransactions ?? [],
     siteSettings: siteSettings ?? [],
+    supportTickets: ticketsWithUsers,
   }
 }
 

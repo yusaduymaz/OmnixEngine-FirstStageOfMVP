@@ -10,6 +10,7 @@ import {
   Briefcase,
   ScrollText,
   ShieldAlert,
+  MessageSquare,
 } from 'lucide-react'
 
 interface NavItem {
@@ -25,6 +26,7 @@ const NAV: NavItem[] = [
   { href: '/admin?tab=users', label: 'Kullanıcılar', tab: 'users', icon: <Users size={16} /> },
   { href: '/admin?tab=content', label: 'Site İçerikleri', tab: 'content', icon: <FileText size={16} /> },
   { href: '/admin?tab=transactions', label: 'Kredi İşlemleri', tab: 'transactions', icon: <Receipt size={16} /> },
+  { href: '/admin?tab=support', label: 'Destek Talepleri', tab: 'support', icon: <MessageSquare size={16} /> },
   { href: '/admin/teams', label: 'Takımlar (Enterprise)', tab: 'teams', icon: <Briefcase size={16} />, disabled: true },
   { href: '/admin/audit', label: 'Denetim Kaydı', tab: 'audit', icon: <ScrollText size={16} />, disabled: true },
 ]

@@ -25,6 +25,7 @@
     "ai": "^6.0.146",
     "cheerio": "^1.2.0",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "framer-motion": "^12.38.0",
     "groq-sdk": "^1.1.2",
     "langfuse": "^3.38.20",

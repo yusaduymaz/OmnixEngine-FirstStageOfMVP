@@ -29,10 +29,10 @@ function NavBar() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Link href="/login" className="hidden sm:block text-[#6B6B7B] font-semibold text-sm px-4 py-2 hover:text-[#1A1A2E] transition-colors">
+          <Link href="/sign-in" className="hidden sm:block text-[#6B6B7B] font-semibold text-sm px-4 py-2 hover:text-[#1A1A2E] transition-colors">
             Giriş Yap
           </Link>
-          <Link href="/register" className="bg-[#FF6B35] hover:bg-[#e85d2a] text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm hover:shadow-md transition-all">
+          <Link href="/sign-up" className="bg-[#FF6B35] hover:bg-[#e85d2a] text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm hover:shadow-md transition-all">
             Ücretsiz Başla
           </Link>
         </div>

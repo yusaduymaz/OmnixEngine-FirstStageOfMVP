@@ -76,9 +76,9 @@ const PLAN_LABELS: Record<string, { label: string; color: string; icon: React.Re
 }
 
 const UPGRADE_PLANS = [
-  { id: 'starter' as PlanId, name: 'Starter', price: '₺299/ay', credits: '500 işlem/ay', features: ['2 platform', 'İçerik kütüphanesi', 'E-posta desteği'] },
-  { id: 'growth' as PlanId, name: 'Growth', price: '₺799/ay', credits: '2.000 işlem/ay', features: ['Toplu yükleme', 'API erişimi', 'Öncelikli destek'] },
-  { id: 'agency' as PlanId, name: 'Agency', price: '₺2.499/ay', credits: '10.000 işlem/ay', features: ['Workspace', 'SLA desteği', 'Özel entegrasyon'] },
+  { id: 'starter' as PaidPlanId, name: 'Starter', price: '₺299/ay', credits: '500 işlem/ay', features: ['2 platform', 'İçerik kütüphanesi', 'E-posta desteği'] },
+  { id: 'growth' as PaidPlanId, name: 'Growth', price: '₺799/ay', credits: '2.000 işlem/ay', features: ['Toplu yükleme', 'API erişimi', 'Öncelikli destek'] },
+  { id: 'agency' as PaidPlanId, name: 'Agency', price: '₺2.499/ay', credits: '10.000 işlem/ay', features: ['Workspace', 'SLA desteği', 'Özel entegrasyon'] },
 ]
 
 export default function SettingsTabbedPage() {
@@ -187,7 +187,7 @@ export default function SettingsTabbedPage() {
           notifySecurity: data.notifySecurity,
         })
       })
-      .catch(() => {})
+      .catch(() => { })
   }, [])
   const resolvedFullName = profileForm.fullName || user?.fullName || ''
   const resolvedEmail = profileForm.email || user?.primaryEmailAddress?.emailAddress || ''
@@ -274,11 +274,10 @@ export default function SettingsTabbedPage() {
             <button
               key={tab.id}
               onClick={() => router.push(`/app/settings/${tab.id}`)}
-              className={`inline-flex items-center justify-center whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-semibold transition-all ${
-                activeTab === tab.id
+              className={`inline-flex items-center justify-center whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-semibold transition-all ${activeTab === tab.id
                   ? 'bg-[#FF6B35] text-white shadow-sm'
                   : 'text-[#1A1A2E] hover:bg-[#FFF2EC]'
-               }`}
+                }`}
             >
               {tab.label}
             </button>
@@ -704,7 +703,7 @@ export default function SettingsTabbedPage() {
             ) : null}
 
             {/* Enterprise Kartı */}
-            {billingData?.plan !== 'enterprise' && (
+            {billingData && billingData.plan !== 'enterprise' && (
               <div className="rounded-2xl border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-6 shadow-sm">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div className="space-y-1">

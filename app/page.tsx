@@ -71,7 +71,7 @@ function NavBar() {
             Giriş Yap
           </LoginLink>
           <Link
-            href="/register"
+            href="/sign-up"
             className="bg-[#FF6B35] hover:bg-[#e85d2a] text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm hover:shadow-md transition-all"
           >
             Ücretsiz Başla
@@ -118,7 +118,7 @@ function HeroSection({ content }: { content: HeroContent }) {
 
             <div className="flex flex-wrap gap-4">
               <Link
-                href="/register"
+                href="/sign-up"
                 className="inline-flex items-center gap-2 bg-[#FF6B35] hover:bg-[#e85d2a] text-white px-8 py-4 rounded-xl font-bold text-base shadow-lg shadow-[#FF6B35]/25 hover:shadow-xl hover:shadow-[#FF6B35]/30 transition-all"
               >
                 {content.ctaPrimary}
@@ -409,7 +409,7 @@ function ImageStudioSection() {
             </div>
 
             <Link
-              href="/register"
+              href="/sign-up"
               className="inline-flex items-center gap-2 text-purple-600 font-bold text-sm hover:gap-3 transition-all"
             >
               Görsel Stüdyo&apos;yu deneyin — ücretsiz
@@ -558,7 +558,7 @@ function HowItWorksSection() {
             </div>
 
             <Link
-              href="/register"
+              href="/sign-up"
               className="inline-flex items-center gap-2 text-[#FF6B35] font-bold text-sm hover:gap-3 transition-all"
             >
               Hemen deneyin — ücretsiz
@@ -827,7 +827,7 @@ function CTASection() {
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Link
-              href="/register"
+              href="/sign-up"
               className="bg-white text-[#FF6B35] px-10 py-4 rounded-xl font-bold text-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
             >
               Ücretsiz Kayıt Ol — 50 Kredi

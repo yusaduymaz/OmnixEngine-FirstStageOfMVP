@@ -16,7 +16,7 @@ interface Props {
  * Beyaz ekran beklemesi yerine kullanıcıya görsel feedback verir.
  */
 export default function LoginLink({
-  href = '/login',
+  href = '/sign-in',
   className,
   children,
   prefetch = true,
