@@ -34,17 +34,7 @@ function getErrorMessage(error: unknown): string {
   return String(error)
 }
 
-function getUsageTokens(usage: unknown) {
-  if (!usage || typeof usage !== 'object') {
-    return { inputTokens: 0, outputTokens: 0 }
-  }
 
-  const usageObj = usage as Partial<Record<'promptTokens' | 'inputTokens' | 'completionTokens' | 'outputTokens', number>>
-  return {
-    inputTokens: usageObj.promptTokens ?? usageObj.inputTokens ?? 0,
-    outputTokens: usageObj.completionTokens ?? usageObj.outputTokens ?? 0,
-  }
-}
 
 function toCriteriaScore(criterion: {
   score: number
@@ -196,7 +186,7 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
     console.log('[Analyze] OpenRouter API çağrılıyor...')
     const openrouter = createOpenAI({ apiKey: openrouterKey, baseURL: 'https://openrouter.ai/api/v1' })
 
-    const { object, usage } = await generateObject({
+    const { object } = await generateObject({
       model: openrouter('openrouter/free'),
       schema: schema,
       system: systemPrompt,

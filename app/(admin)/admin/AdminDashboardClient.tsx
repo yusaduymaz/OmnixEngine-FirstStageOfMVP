@@ -613,7 +613,7 @@ function UserDetailModal({
             suspended: d.user.suspended,
           })
         }
-      } catch (err) {
+      } catch {
         if (active) setMsg('❌ Kullanıcı bilgileri yüklenemedi')
       } finally {
         if (active) setLoading(false)

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Metadata } from 'next'
 import PricingSection from '@/components/landing/PricingSection'
 import LoginLink from '@/components/landing/LoginLink'
@@ -442,10 +443,13 @@ function ImageStudioSection() {
                 {/* Öncesi */}
                 <div className="relative rounded-xl overflow-hidden border border-[#E8E4DC]">
                   <div className="aspect-square bg-gradient-to-br from-[#d4c8b8] via-[#c9bda9] to-[#b8a994] flex items-center justify-center relative">
-                    <img
+                    <Image
                       src={STUDIO_BEFORE_IMG}
                       alt="Ürün görseli — işlem öncesi"
                       className="w-full h-full object-cover absolute inset-0"
+                      fill
+                      unoptimized
+                      sizes="(max-width: 768px) 50vw, 25vw"
                     />
                   </div>
                   <div className="absolute bottom-0 inset-x-0 bg-red-500/90 text-white text-[10px] font-bold text-center py-1">
@@ -456,10 +460,13 @@ function ImageStudioSection() {
                 {/* Sonrası */}
                 <div className="relative rounded-xl overflow-hidden border border-purple-200">
                   <div className="aspect-square bg-white flex items-center justify-center relative">
-                    <img
+                    <Image
                       src={STUDIO_AFTER_IMG}
                       alt="Ürün görseli — işlem sonrası"
                       className="w-full h-full object-cover absolute inset-0"
+                      fill
+                      unoptimized
+                      sizes="(max-width: 768px) 50vw, 25vw"
                     />
                   </div>
                   <div className="absolute bottom-0 inset-x-0 bg-green-500/90 text-white text-[10px] font-bold text-center py-1">

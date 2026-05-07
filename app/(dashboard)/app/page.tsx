@@ -341,7 +341,7 @@ export default async function DashboardPage() {
                 <span className="text-[10px] font-bold text-white uppercase tracking-widest">Canlı Akış</span>
               </div>
             </div>
-            <NewsTicker items={infoBoxes.map(({ icon: _, ...rest }) => rest)} />
+            <NewsTicker items={infoBoxes.map((item) => ({ title: item.title, description: item.description, href: item.href }))} />
           </section>
 
         </div>

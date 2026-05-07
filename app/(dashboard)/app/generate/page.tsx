@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -151,7 +151,7 @@ function SEOScoreRing({ score }: { score: number }) {
 }
 
 // ---------- Kopyala Butonu ----------
-function CopyButton({ text, id }: { text: string; id: string }) {
+function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false)
   const copy = async () => {
     await navigator.clipboard.writeText(text)
@@ -175,7 +175,7 @@ export default function GeneratePage() {
   const { language, country } = useSettingsStore()
   
   // Ülkeye göre platformları hesapla
-  const availablePlatformsList = COUNTRY_PLATFORMS_MAPPING[country] || []
+  const availablePlatformsList = useMemo(() => COUNTRY_PLATFORMS_MAPPING[country] || [], [country])
   const currentAvailablePlatforms = availablePlatformsList.map((p) => ({
     id: p,
     label: PLATFORM_LABELS[p as PlatformId],
@@ -191,7 +191,7 @@ export default function GeneratePage() {
     } else {
       setPlatforms([])
     }
-  }, [country])
+  }, [availablePlatformsList])
 
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<GenerationResult | null>(null)
@@ -707,7 +707,7 @@ export default function GeneratePage() {
                         <div key={i} className="bg-[#F8F7F4] rounded-xl p-3.5">
                           <div className="flex items-start justify-between gap-2">
                             <p className="text-sm text-[#1A1A2E] leading-snug flex-1">{title.text}</p>
-                            <CopyButton text={title.text} id={`title-${i}`} />
+                            <CopyButton text={title.text} />
                           </div>
                           <div className="flex items-center gap-2 mt-2">
                             <span
@@ -747,7 +747,7 @@ export default function GeneratePage() {
                         <div>
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-xs font-medium text-[#6B6B7B]">Kısa Açıklama</span>
-                            <CopyButton text={result.description_short} id="desc-short" />
+                            <CopyButton text={result.description_short} />
                           </div>
                           <p className="text-sm text-[#1A1A2E] bg-[#F8F7F4] rounded-xl p-3.5 leading-relaxed">
                             {result.description_short}
@@ -756,7 +756,7 @@ export default function GeneratePage() {
                         <div>
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-xs font-medium text-[#6B6B7B]">Uzun Açıklama</span>
-                            <CopyButton text={result.description_long} id="desc-long" />
+                            <CopyButton text={result.description_long} />
                           </div>
                           <p className="text-sm text-[#1A1A2E] bg-[#F8F7F4] rounded-xl p-3.5 whitespace-pre-line leading-relaxed max-h-72 overflow-y-auto">
                             {result.description_long}
@@ -799,7 +799,6 @@ export default function GeneratePage() {
                                 </div>
                                 <CopyButton
                                   text={`${ad.headline}\n${ad.body}`}
-                                  id={`ad-copy-${i}`}
                                 />
                               </div>
                               <p className="text-sm font-semibold text-[#1A1A2E] mb-1.5">

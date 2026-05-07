@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -107,7 +107,7 @@ function ResultCard({ data }: { data: ConvertedPlatformResult }) {
 export default function ConverterPage() {
   const { country } = useSettingsStore()
   
-  const availablePlatformsList = COUNTRY_PLATFORMS_MAPPING[country] || []
+  const availablePlatformsList = useMemo(() => COUNTRY_PLATFORMS_MAPPING[country] || [], [country])
   const currentAvailablePlatforms = availablePlatformsList.map((p) => ({
     id: p,
     label: PLATFORM_LABELS[p as PlatformId],
@@ -126,12 +126,11 @@ export default function ConverterPage() {
     } else {
       setTargetPlatforms([])
     }
-  }, [country])
+  }, [availablePlatformsList])
 
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(FormSchema),

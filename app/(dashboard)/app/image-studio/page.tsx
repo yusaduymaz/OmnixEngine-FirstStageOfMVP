@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import Image from 'next/image'
 import { Upload, Link as LinkIcon, Image as ImageIcon, Wand2, Download, Loader2, ArrowRight } from 'lucide-react'
 import type { ImageAction, ImageProcessResult } from '@/agents/image/types/process.types'
 
@@ -194,7 +195,7 @@ export default function ImageStudioPage() {
                     {selectedFileUrl && (
                       <div className="mt-4 p-2 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-between">
                          <span className="text-xs font-medium text-[#4A4A5E] truncate">Görsel Seçildi</span>
-                         <img src={selectedFileUrl} alt="preview" className="w-10 h-10 object-cover rounded" />
+                         <Image src={selectedFileUrl} alt="preview" width={40} height={40} unoptimized className="w-10 h-10 object-cover rounded" />
                       </div>
                     )}
                   </div>
@@ -315,7 +316,7 @@ export default function ImageStudioPage() {
                   
                   {/* Orijinal Görsel (Arka) */}
                   <div className="absolute inset-0 z-10 select-none">
-                    <img src={result.originalUrl} className="w-full h-full object-contain pointer-events-none" alt="Original" />
+                    <Image src={result.originalUrl} className="w-full h-full object-contain pointer-events-none" alt="Original" fill unoptimized sizes="100vw" />
                   </div>
                   
                   {/* İşlenmiş Görsel (Ön - Clip Path ile) */}
@@ -323,7 +324,7 @@ export default function ImageStudioPage() {
                     className="absolute inset-0 z-20 select-none"
                     style={{ clipPath: `inset(0 ${100 - sliderPos}% 0 0)` }}
                   >
-                    <img src={result.processedUrl} className="w-full h-full object-contain pointer-events-none" alt="Processed" />
+                    <Image src={result.processedUrl} className="w-full h-full object-contain pointer-events-none" alt="Processed" fill unoptimized sizes="100vw" />
                   </div>
 
                   {/* Slider Control */}

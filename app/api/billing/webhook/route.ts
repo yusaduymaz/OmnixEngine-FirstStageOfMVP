@@ -29,7 +29,7 @@ export async function POST(req: Request) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session
         const customerId = session.customer as string
-        const planId = session.metadata?.planId as PlanId
+        const planId = session.metadata?.planId as PlanId | undefined
 
         if (planId) {
           await handleSubscriptionChange(customerId, planId, 'active')
@@ -39,9 +39,9 @@ export async function POST(req: Request) {
 
       case 'customer.subscription.updated': {
         const session = event.data.object as Stripe.Subscription
-        const status = session.status
+        const status = session.status as string
         const customerId = session.customer as string
-        const planId = session.metadata?.planId as PlanId
+        const planId = session.metadata?.planId as PlanId | undefined
 
         if (planId) {
           await handleSubscriptionChange(customerId, planId, status)

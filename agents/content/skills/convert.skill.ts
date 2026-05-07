@@ -8,7 +8,7 @@ import { createOpenAI } from '@ai-sdk/openai'
 import Groq from 'groq-sdk'
 import { z } from 'zod'
 import { scrapeUrl } from '../utils/scrape'
-import type { ConvertSkillInput, ConvertResult } from '../types/convert.types'
+import type { ConvertSkillInput, ConvertResult, ConvertedPlatformResult } from '../types/convert.types'
 import { buildSystemPrompt, Tone, PLATFORM_LABELS, type PlatformId } from '@/prompts/system'
 import { buildConvertPrompt } from '../prompts/convert.prompt'
 import { CREDIT_COSTS } from '@/lib/billing/credit-display'
@@ -107,7 +107,7 @@ export async function convertSkill(input: ConvertSkillInput): Promise<ConvertRes
     throw new ConvertSkillError('AI servisi yapılandırılamadı (Key eksik).', 500)
   }
 
-  let resultObject: { results: Array<{ platform: string; title: string; description: string }> } | null = null
+  let resultObject: { results: ConvertedPlatformResult[] } | null = null
   let tokensUsed = 0
   let modelUsed = 'openrouter/free'
 
@@ -132,8 +132,21 @@ export async function convertSkill(input: ConvertSkillInput): Promise<ConvertRes
       prompt: prompt,
       temperature: 0.6
     })
-    resultObject = object as { results: Array<{ platform: string; title: string; description: string }> }
-    tokensUsed = (usage.promptTokens ?? 0) + (usage.completionTokens ?? 0)
+
+    resultObject = object as { results: ConvertedPlatformResult[] }
+
+    // Güvenli token hesaplama (farklı SDK sürümleri için)
+    interface UsageLike {
+      promptTokens?: number
+      inputTokens?: number
+      completionTokens?: number
+      outputTokens?: number
+    }
+    const u = usage as UsageLike
+    const promptTokens = u.promptTokens ?? u.inputTokens ?? 0
+    const completionTokens = u.completionTokens ?? u.outputTokens ?? 0
+    tokensUsed = promptTokens + completionTokens
+
     console.log('[Convert] Dönüştürme tamamlandı (OpenRouter)')
   } catch (openrouterErr) {
     const err = openrouterErr as Error
@@ -170,12 +183,12 @@ export async function convertSkill(input: ConvertSkillInput): Promise<ConvertRes
 
       // Normalizasyon: Eğer direkt array geldiyse results içine koy
       if (Array.isArray(parsed)) {
-        resultObject = { results: parsed }
+        resultObject = { results: parsed as ConvertedPlatformResult[] }
       } else if (parsed && parsed.results) {
-        resultObject = parsed
+        resultObject = parsed as { results: ConvertedPlatformResult[] }
       } else {
         // Eğer results yoksa ama objeyse, belki direkt bir sonuç objesidir (tekli platform)
-        resultObject = { results: [parsed] }
+        resultObject = { results: [parsed] as ConvertedPlatformResult[] }
       }
 
       tokensUsed = response.usage?.total_tokens ?? 0
