@@ -1,25 +1,28 @@
 # OmniX Engine — AI Omnichannel İçerik & Analiz Motoru
 
-![OmniX Engine](https://img.shields.io/badge/Status-Active-success) ![Version](https://img.shields.io/badge/Version-2.0-blue) ![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js) ![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E?logo=supabase) ![Claude AI](https://img.shields.io/badge/AI-Claude_Sonnet_4-D97757?logo=anthropic)
+![OmniX Engine](https://img.shields.io/badge/Status-Sprint_3_Complete-success) ![Version](https://img.shields.io/badge/Version-2.5-blue) ![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js) ![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E?logo=supabase) ![Claude AI](https://img.shields.io/badge/AI-Claude_3.5_Sonnet-D97757?logo=anthropic)
 
 ## 🚀 Proje Hakkında
 
-**OmniX Engine**, tüm global pazaryerleri ve e-ticaret altyapıları (Trendyol, Hepsiburada, Shopify, WooCommerce, Amazon, Etsy vb.) için geliştirilmiş, Türkçe/çok dilli SEO odaklı gelişmiş bir yapay zeka içerik ve analiz motorudur. 
+**OmniX Engine**, global pazaryerleri ve e-ticaret altyapıları (Trendyol, Hepsiburada, Shopify, WooCommerce, Amazon, Etsy vb.) için geliştirilmiş, **multi-agent mimarisine sahip** gelişmiş bir yapay zeka içerik ve analiz motorudur. 
 
 Türkiye'deki ve dünyadaki e-ticaret satıcılarının en büyük problemlerinden biri olan "aynı ürünü farklı platformların kurallarına (kısa başlık, Amazon bullet point, Shopify HTML vb.) göre manuel uyarlama" sorununu ortadan kaldırır. Satıcıların içerik üretme, dönüştürme ve analiz etme süreçlerini saatlerden saniyelere indirir.
 
-## ✨ Temel Modüller
+> [!NOTE]
+> Bu proje, e-ticaret operasyonlarını tamamen yapay zeka ajanlarına devreden bir **SaaS platformu** olarak tasarlanmıştır ve Vercel üzerinde ölçeklenebilir şekilde deploy edilmiştir. Co-founder vizyonuyla, e-ticareti otonom hale getirmek için geliştirilmektedir.
 
-OmniX Engine 4 temel modülden oluşmaktadır:
+## ✨ Temel Modüller (AI Agents)
 
-1. **✍️ İçerik Üreteci (Generator):** Sıfırdan, global ve yerel platformlara özel SEO uyumlu başlık, açıklama ve meta reklam metinleri oluşturur.
-2. **🔄 İçerik Dönüştürücü (Converter):** Var olan bir ürün linkini (URL) veya metnini otomatik web scraping (Cheerio/Puppeteer) ile çekip, hedef platformun spesifik kurallarına göre yeniden yazar.
-3. **🔍 İçerik Analizörü (Analyzer):** Mevcut içerikleri hedef platformun kurallarına (SEO skorları, kelime limitleri, yasal uyumluluk vb.) göre analiz edip detaylı bir denetim (audit) raporu ve iyileştirme önerileri sunar.
-4. **📸 Akıllı Görsel Stüdyosu (Image Studio):** Ham ürün fotoğraflarının arka planını yapay zeka ile temizleyip profesyonel e-ticaret standartlarına (doğru ışık, gölge, platformun istediği spesifik boyutlar) uygun yepyeni görseller üretir.
+OmniX Engine, birbirleriyle orkestrasyon içinde çalışan uzman ajanlardan oluşur:
 
-## 🛠️ Tech Stack (Kullanılan Teknolojiler)
+1. **✍️ Content Agent (Üreteci & Analizör):** Sıfırdan, global ve yerel platformlara özel SEO uyumlu başlık, açıklama ve meta reklam metinleri oluşturur. Mevcut içerikleri platform kurallarına göre analiz edip iyileştirme önerileri sunar.
+2. **🔄 Content Converter (Dönüştürücü):** Var olan bir ürün linkini (URL) veya metnini otomatik web scraping ile çekip, hedef platformun spesifik kurallarına göre yeniden yazar.
+3. **📸 Image Agent (Görsel Stüdyosu):** Ham ürün fotoğraflarının arka planını yapay zeka ile temizleyip profesyonel e-ticaret standartlarına (doğru ışık, gölge, spesifik boyutlar) uygun yepyeni görseller üretir.
+4. **📊 Pricing & Inventory Agents (Geliştirme Aşamasında):** Rakip fiyat analizi, dinamik fiyatlama önerileri ve stok tahmini ile operasyonu uçtan uca yönetir.
 
-Proje, modern ve ölçeklenebilir B2B SaaS mimarisine uygun olarak geliştirilmiştir.
+## 🛠️ Teknik Altyapı (Tech Stack)
+
+Proje, kurumsal seviyede güvenlik ve hız standartlarına (Vercel, Supabase, Clerk) göre inşa edilmiştir.
 
 ### Frontend
 * **Framework:** Next.js 14 (App Router, TypeScript)
@@ -31,21 +34,16 @@ Proje, modern ve ölçeklenebilir B2B SaaS mimarisine uygun olarak geliştirilmi
 ### Backend & Veritabanı
 * **Runtime:** Next.js API Routes / Edge Functions
 * **Veritabanı:** Supabase (PostgreSQL + Row Level Security)
-* **Kimlik Doğrulama:** Clerk (B2B auth, MFA, vb.)
+* **Kimlik Doğrulama:** Clerk (B2B auth, Workspaces, MFA)
 * **Cache & Rate Limiting:** Upstash Redis
-* **Arka Plan İşlemleri (Jobs):** Trigger.dev
-* **Dosya Depolama:** Supabase Storage (Medya ve CSV yönetimi)
+* **Arka Plan İşlemleri:** Trigger.dev
+* **Ödeme & Abonelik:** Stripe (Atomik Kredi Sistemi)
 
 ### Yapay Zeka (AI) & Scraping Katmanı
-* **Metin AI:** Claude API (claude-sonnet-4) + Vercel AI SDK (Streaming desteği)
+* **Metin AI:** Anthropic Claude 3.5 Sonnet + Vercel AI SDK (Streaming desteği)
 * **Görsel AI:** fal.ai / Replicate (Background removal & studio render)
-* **Prompt Yönetimi:** Langfuse
-* **Web Scraping:** Cheerio (Lightweight HTML) / Puppeteer Core (JS-Rendered sayfalar)
-
-### Servisler
-* **Ödeme & Abonelik:** Stripe
-* **E-posta İletişimi:** Resend
-* **Analitik:** PostHog
+* **Prompt Yönetimi:** Langfuse (AI Observability)
+* **Web Scraping:** Cheerio (Lightweight) / Puppeteer Core (JS-Rendered)
 
 ## 🎯 Hedef Personalar
 
@@ -53,33 +51,32 @@ Proje, modern ve ölçeklenebilir B2B SaaS mimarisine uygun olarak geliştirilmi
 - **Global Girişimciler:** Shopify, Amazon, Etsy gibi farklı platformlarda aynı anda D2C veya global satış yapan markalar.
 - **Kurumsal / Ajanslar:** Yüzlerce ürünü olan, toplu yükleme (CSV) ve çoklu müşteri (workspace) yönetimine ihtiyaç duyan ajanslar.
 
-## 📁 Klasör Mimarisi
+## 📁 Mimari Yapı
 
 ```text
-├── app/
-│   ├── (marketing)/         # Landing page ve pazarlama sayfaları
-│   ├── (auth)/              # Clerk login/register sayfaları
-│   ├── (dashboard)/app/     # Ana Uygulama Paneli
-│   │   ├── generate/        # İçerik Üreteci
-│   │   ├── converter/       # İçerik Dönüştürücü
-│   │   ├── analyzer/        # İçerik Analizörü
-│   │   └── image-studio/    # Akıllı Görsel Stüdyosu
-│   └── api/                 # Backend Route'ları (AI, webhooks, auth)
-├── lib/
-│   ├── claude/              # Prompt ve Vercel AI SDK yardımcıları
-│   └── supabase/            # DB client
-├── prompts/                 # Sistem promptları ve platform kuralları (system.ts)
-├── types/                   # Global TypeScript tip tanımları
-└── components/              # Yeniden kullanılabilir UI (shadcn)
+├── agents/              # Uzman AI Ajanları (Content, Image, Pricing, Inventory)
+├── orchestrator/        # Ajanlar arası paralel yönetim ve veri paylaşımı
+├── app/                 # Next.js 14 App Router (Marketing, Auth, Dashboard)
+├── components/          # Yeniden kullanılabilir UI bileşenleri (shadcn/ui)
+├── lib/                 # Servis entegrasyonları (Claude, Supabase, Redis, Stripe)
+├── prompts/             # 30+ platform için özelleştirilmiş sistem promptları
+├── types/               # Global TypeScript tip tanımları
+└── supabase/migrations/ # Veritabanı şeması ve atomik kredi sistemi
 ```
 
 ## 🔒 Güvenlik ve Altyapı Kuralları
 
-- Sistemdeki tüm metinler, hata mesajları ve yorumlar Türkçe iş dünyası diline uygundur.
-- Tüm API Route'ları **Zod** kullanılarak sıkı bir validasyon katmanından geçer.
-- Kullanıcı veri güvenliği için Supabase üzerinde **RLS (Row Level Security)** aktif edilmiştir.
-- Claude AI çağrıları kullanıcı deneyimi için **Streaming (Vercel AI SDK)** kullanılarak eşzamanlı aktarılır.
-- Rate limiting işlemleri Upstash Redis ile korunmaktadır.
+- **Sıkı Validasyon:** Tüm API Route'ları Zod kullanılarak sıkı bir validasyon katmanından geçer.
+- **Veri Güvenliği:** Kullanıcı veri güvenliği için Supabase üzerinde RLS (Row Level Security) aktif edilmiştir.
+- **Performans:** Claude AI çağrıları kullanıcı deneyimi için Streaming kullanılarak eşzamanlı aktarılır.
+- **Hata Yönetimi:** Tüm süreçlerde kapsamlı hata yakalama ve kullanıcıya Türkçe bilgilendirme mekanizması mevcuttur.
+
+## 📈 Güncel Durum (Roadmap)
+
+- [x] **Sprint 1-2:** Content Agent (Analyzer + Converter) - **TAMAMLANDI**
+- [x] **Sprint 3:** Image Agent (Background Removal + Studio) - **TAMAMLANDI**
+- [ ] **Sprint 4:** Pricing Agent (Competitor Analysis) - **DEVAM EDİYOR**
+- [ ] **Sprint 5:** Inventory Agent & Full Product Audit - **PLANLANDI**
 
 ---
-*Bu doküman `architecture.md` ve `design.md` baz alınarak OmniX Engine projesi için hazırlanmıştır.*
+*OmniX Engine, e-ticaretin geleceğini yapay zeka ajanlarıyla inşa ediyor.*

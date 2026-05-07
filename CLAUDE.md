@@ -156,7 +156,7 @@ contentforge-tr/
 ├── types/                           # TypeScript tip tanımları
 │   └── global.ts                    # Platform, Agent, API, Kullanıcı tipleri
 │
-├── middleware.ts                     # Auth middleware (Clerk)
+├── proxy.ts                        # Auth & Proxy middleware (Clerk)
 ├── package.json
 ├── tsconfig.json
 └── next.config.ts
