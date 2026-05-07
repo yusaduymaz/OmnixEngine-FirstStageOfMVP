@@ -2,6 +2,7 @@ import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { getStripe } from '@/lib/stripe/client'
 import { handleSubscriptionChange } from '@/lib/stripe/webhook-handlers'
+import { PlanId } from '@/lib/stripe/plans'
 import type Stripe from 'stripe'
 
 export async function POST(req: Request) {
@@ -28,7 +29,7 @@ export async function POST(req: Request) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session
         const customerId = session.customer as string
-        const planId = session.metadata?.planId
+        const planId = session.metadata?.planId as PlanId
 
         if (planId) {
           await handleSubscriptionChange(customerId, planId, 'active')
@@ -40,7 +41,7 @@ export async function POST(req: Request) {
         const session = event.data.object as Stripe.Subscription
         const status = session.status
         const customerId = session.customer as string
-        const planId = session.metadata?.planId
+        const planId = session.metadata?.planId as PlanId
 
         if (planId) {
           await handleSubscriptionChange(customerId, planId, status)

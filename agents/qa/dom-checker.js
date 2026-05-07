@@ -5,14 +5,13 @@
  * Kullanılan Teknolojiler: Cheerio (Hızlı analiz), Fetch API
  */
 
-const cheerio = require('cheerio');
-
 const TARGET_URL = process.env.TEST_URL || 'http://localhost:3000';
 
 async function checkDOM() {
   console.log(`[DOM Checker] Analiz ediliyor: ${TARGET_URL}`);
 
   try {
+    const cheerio = await import('cheerio');
     const response = await fetch(TARGET_URL);
     if (!response.ok) {
       throw new Error(`HTTP Hata! Statu: ${response.status}`);

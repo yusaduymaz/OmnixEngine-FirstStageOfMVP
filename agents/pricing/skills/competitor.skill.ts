@@ -14,7 +14,7 @@ export class PricingSkillError extends Error {
   }
 }
 
-async function resolveUser(clerkId: string, supabase: any) {
+async function resolveUser(clerkId: string, supabase: ReturnType<typeof getSupabaseAdmin>) {
   const { data: user, error } = await supabase
     .from('users')
     .select('id, credits_used, credits_limit')
@@ -45,7 +45,7 @@ export async function pricingSkill(input: PricingSkillInput): Promise<PricingRes
     try {
       const data = await scrapeUrl(input.sourceUrl)
       scrapedInfo = `Ürün Sayfası Özeti: ${data.title} - ${data.description}`
-    } catch (e) {
+    } catch {
       console.warn('[Pricing] Scraping başarısız, sadece giriş verileriyle devam ediliyor.')
     }
   }
@@ -57,7 +57,7 @@ export async function pricingSkill(input: PricingSkillInput): Promise<PricingRes
   const openrouter = createOpenAI({ apiKey: openrouterKey, baseURL: 'https://openrouter.ai/api/v1' })
   const modelId = 'anthropic/claude-3-5-sonnet'
 
-  const { object: result, usage } = await generateObject({
+  const { object: result } = await generateObject({
     model: openrouter(modelId),
     schema: z.object({
       marketScore: z.number().min(0).max(100),
@@ -116,7 +116,7 @@ export async function pricingSkill(input: PricingSkillInput): Promise<PricingRes
     competitors: result.competitors as CompetitorData[],
     marginAnalysis,
     suggestedPrice: result.suggestedPrice,
-    marketPosition: result.marketPosition as any,
+    marketPosition: result.marketPosition,
     aiFeedback: result.aiFeedback,
     analysisMs: Date.now() - startTime
   }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -421,12 +422,12 @@ export default function GeneratePage() {
                     <p className="text-sm font-bold text-red-900">İşlem Durduruldu</p>
                     <p className="text-xs text-red-700 mt-0.5 leading-relaxed">{error}</p>
                     {error.includes('Yetersiz bakiye') && (
-                      <a 
+                      <Link 
                         href="/app/settings/billing" 
                         className="inline-block mt-2 text-xs font-bold text-red-900 underline hover:no-underline"
                       >
                         Kredi Yükle →
-                      </a>
+                      </Link>
                     )}
                   </div>
                   <button 

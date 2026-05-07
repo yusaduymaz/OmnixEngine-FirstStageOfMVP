@@ -32,7 +32,13 @@ export const GET = withErrorHandler<{ params: Promise<{ id: string }> }>(async (
     .select('user_id, role, users(email, full_name)')
     .eq('workspace_id', workspaceId)
 
-  const members = (rows ?? []).map((r: any) => ({
+  interface MemberRow {
+    user_id: string
+    role: string
+    users: { email: string; full_name: string | null } | null
+  }
+
+  const members = ((rows as unknown as MemberRow[]) ?? []).map((r) => ({
     user_id: r.user_id,
     role: r.role,
     email: r.users?.email,

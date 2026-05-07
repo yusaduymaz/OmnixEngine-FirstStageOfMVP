@@ -198,7 +198,7 @@ export default function HizmetlerimizPage() {
       {/* 4 Modül Detay */}
       <section className="py-16 bg-white">
         <div className="max-w-6xl mx-auto px-6 md:px-8 space-y-20">
-          {modules.map((mod, idx) => (
+          {modules.map((mod) => (
             <div key={mod.title} className={`rounded-3xl border-2 ${mod.color} p-8 md:p-12`}>
               {/* Modül Header */}
               <div className="flex items-center gap-4 mb-8">

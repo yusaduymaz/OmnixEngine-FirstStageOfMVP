@@ -19,8 +19,7 @@ import {
   Layers,
   BadgeCheck,
   ChevronRight,
-  ArrowUpRight,
-  Wand2
+  ArrowUpRight
 } from 'lucide-react'
 import { buildCreditDisplay, formatOperations } from '@/lib/billing/credits'
 
@@ -342,7 +341,7 @@ export default async function DashboardPage() {
                 <span className="text-[10px] font-bold text-white uppercase tracking-widest">Canlı Akış</span>
               </div>
             </div>
-            <NewsTicker items={infoBoxes.map(({ icon, ...rest }) => rest)} />
+            <NewsTicker items={infoBoxes.map(({ icon: _, ...rest }) => rest)} />
           </section>
 
         </div>

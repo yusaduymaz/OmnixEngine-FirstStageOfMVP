@@ -242,7 +242,7 @@ export default function ConverterPage() {
               {activeTab === 'url' ? (
                 <div>
                   <label className="block text-sm font-medium text-[#1A1A2E] mb-1.5">
-                    Kaynak Ürün URL'si <span className="text-[#FF6B35]">*</span>
+                    Kaynak Ürün URL&#39;si <span className="text-[#FF6B35]">*</span>
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">

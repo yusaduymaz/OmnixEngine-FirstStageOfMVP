@@ -24,8 +24,9 @@ export class ConvertSkillError extends Error {
 async function safeScrapeUrl(url: string) {
   try {
     return await scrapeUrl(url)
-  } catch (err: any) {
-    throw new ConvertSkillError(err.message, 400)
+  } catch (err) {
+    const error = err as Error
+    throw new ConvertSkillError(error.message, 400)
   }
 }
 
@@ -106,7 +107,7 @@ export async function convertSkill(input: ConvertSkillInput): Promise<ConvertRes
     throw new ConvertSkillError('AI servisi yapılandırılamadı (Key eksik).', 500)
   }
 
-  let resultObject: any = null
+  let resultObject: { results: Array<{ platform: string; title: string; description: string }> } | null = null
   let tokensUsed = 0
   let modelUsed = 'openrouter/free'
 
@@ -131,11 +132,12 @@ export async function convertSkill(input: ConvertSkillInput): Promise<ConvertRes
       prompt: prompt,
       temperature: 0.6
     })
-    resultObject = object
-    tokensUsed = ((usage as any).promptTokens ?? (usage as any).inputTokens ?? 0) + ((usage as any).completionTokens ?? (usage as any).outputTokens ?? 0)
+    resultObject = object as { results: Array<{ platform: string; title: string; description: string }> }
+    tokensUsed = (usage.promptTokens ?? 0) + (usage.completionTokens ?? 0)
     console.log('[Convert] Dönüştürme tamamlandı (OpenRouter)')
-  } catch (openrouterErr: any) {
-    console.warn('[Convert] OpenRouter error, trying Groq fallback...', openrouterErr?.message || openrouterErr)
+  } catch (openrouterErr) {
+    const err = openrouterErr as Error
+    console.warn('[Convert] OpenRouter error, trying Groq fallback...', err?.message || err)
 
     try {
       if (!groqKey) {
@@ -179,9 +181,10 @@ export async function convertSkill(input: ConvertSkillInput): Promise<ConvertRes
       tokensUsed = response.usage?.total_tokens ?? 0
       modelUsed = 'llama-3.3-70b-versatile (Groq)'
       console.log('[Convert] Analiz tamamlandı (Groq Llama)')
-    } catch (groqErr: any) {
-      console.warn('[Convert] Groq fallback error:', groqErr?.message || groqErr)
-      const errString = groqErr?.message || String(groqErr)
+    } catch (groqErr) {
+      const err = groqErr as Error
+      console.warn('[Convert] Groq fallback error:', err?.message || err)
+      const errString = err?.message || String(err)
       if (errString.includes('credit balance is too low') || errString.includes('quota')) {
         throw new ConvertSkillError('Yapay zeka API krediniz yetersiz veya kotalarınız dolmuş. Lütfen API anahtarlarınızın limitlerini kontrol edin.', 402)
       }

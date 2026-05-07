@@ -93,7 +93,7 @@ import { buildCreditDisplay, formatOperationLabel } from '@/lib/billing/credits'
 
 function Sidebar() {
   const pathname = usePathname()
-  const { planId, creditsRemaining, creditsLimit, creditsUsed, isLoading } = usePlan()
+  const { planId, creditsLimit, creditsUsed, isLoading } = usePlan()
   
   const display = buildCreditDisplay(creditsUsed, creditsLimit)
   const showUpgrade = !isLoading && (planId === 'trial' || planId === 'starter')

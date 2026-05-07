@@ -17,13 +17,12 @@ import {
   CheckCircle2,
   AlertCircle,
   Download,
-  ExternalLink,
 } from 'lucide-react'
 import { formatDistanceToNow, format } from 'date-fns'
 import { tr } from 'date-fns/locale'
 import { notify } from '@/lib/toast'
 import { createTicketSchema, type CreateTicketInput, validateFile, formatFileSize } from '@/lib/validations/support'
-import type { SupportTicket, TicketCategory } from '@/types/support'
+import type { SupportTicket } from '@/types/support'
 import { TICKET_CATEGORIES, TICKET_STATUSES } from '@/types/support'
 import TicketCard from '@/components/support/TicketCard'
 

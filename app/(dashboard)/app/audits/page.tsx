@@ -7,7 +7,6 @@ import {
   Filter, 
   BarChart3, 
   Calendar, 
-  ArrowRight, 
   ExternalLink,
   ChevronRight,
   Package,
@@ -15,17 +14,37 @@ import {
   SearchCode,
   Loader2
 } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import AuditReportModal from '@/components/dashboard/AuditReportModal'
+import type { AuditResult } from '@/types/global'
+
+interface AuditListItem {
+  id: string
+  product_name: string
+  created_at: string
+  product_url?: string | null
+  product_price: number
+  currency: string
+  seo_score: number
+  pricing_score: number
+  inventory_status: string
+  analyses?: AuditResult['content']
+  pricing?: AuditResult['pricing']
+  inventory?: AuditResult['inventory']
+}
+
+interface SelectedAudit extends AuditListItem {
+  formattedResult: AuditResult
+}
 
 export default function AuditsLibraryPage() {
-  const [audits, setAudits] = useState<any[]>([])
+  const [audits, setAudits] = useState<AuditListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   
   // Modal State
-  const [selectedAudit, setSelectedAudit] = useState<any>(null)
+  const [selectedAudit, setSelectedAudit] = useState<SelectedAudit | null>(null)
   const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
@@ -41,7 +60,7 @@ export default function AuditsLibraryPage() {
         const message = errorData?.error || 'Denetim raporları yüklenemedi.'
         throw new Error(message)
       }
-      const data = await res.json()
+      const data = (await res.json()) as { audits?: AuditListItem[] }
       setAudits(data.audits || [])
     } catch (err) {
       console.error('Denetimler yüklenirken hata:', err)
@@ -57,9 +76,9 @@ export default function AuditsLibraryPage() {
     audit.product_name.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const handleViewDetails = (audit: any) => {
+  const handleViewDetails = (audit: AuditListItem) => {
     // Audit verisini modalın beklediği formata dönüştür
-    const formattedResult = {
+    const formattedResult: AuditResult = {
       content: audit.analyses,
       pricing: audit.pricing,
       inventory: audit.inventory

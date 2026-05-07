@@ -6,6 +6,12 @@ import { fal } from '@fal-ai/client'
 import { v4 as uuidv4 } from 'uuid'
 import type { ImageAction, ImageProcessInput, ImageProcessResult } from '../types/process.types'
 
+interface FalImageResponse {
+  image?: {
+    url?: string
+  }
+}
+
 export class ImageProcessError extends Error {
   constructor(message: string, public readonly statusCode: number = 500) {
     super(message)
@@ -115,30 +121,34 @@ export async function processImageSkill(input: ImageProcessInput): Promise<Image
     // TODO: Fal.ai anahtarının process.env.FAL_KEY ile ayarlandığı varsayılır. (Fal istemcisi bunu otomatik bulur)
     if (input.action === 'remove-background') {
       modelUsed = 'fal-ai/birefnet'
-      const result: any = await fal.subscribe("fal-ai/birefnet", {
+      const result = await fal.subscribe("fal-ai/birefnet", {
         input: { image_url: originalPublicUrl },
         logs: true
-      })
-      aiResultUrl = result.image.url
+      }) as FalImageResponse
+      aiResultUrl = result.image?.url ?? ''
     } else if (input.action === 'replace-background') {
       modelUsed = 'fal-ai/photoroom/background-replacement'
       // Varsayılan olarak photoroom veya flux kullanılabilir, mock edelim:
-      const result: any = await fal.subscribe("fal-ai/birefnet", {
+      const result = await fal.subscribe("fal-ai/birefnet", {
         input: { image_url: originalPublicUrl },
-      })
-      aiResultUrl = result.image.url
+      }) as FalImageResponse
+      aiResultUrl = result.image?.url ?? ''
       // Gerçek implementasyonda stüdyo prompt'u eklenebilir. Şimdilik arkaplanı siliyoruz.
     } else {
       throw new ImageProcessError('Geçersiz işlem türü.', 400)
+    }
+
+    if (!aiResultUrl) {
+      throw new ImageProcessError('AI işleme çıktısı alınamadı.', 500)
     }
 
     // 4. İşlenmiş Resmi Storage'a Yükle
     const { buffer: procBuffer, contentType: procContentType } = await fetchImageBuffer(aiResultUrl)
     processedPublicUrl = await uploadToStorage(supabase, processedPath, procBuffer, procContentType)
     
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[Image] İşleme hatası:', err)
-    errorMsg = err.message || 'Görsel işlenirken bir hata oluştu.'
+    errorMsg = err instanceof Error ? err.message : 'Görsel işlenirken bir hata oluştu.'
   }
 
   const processingTimeMs = Date.now() - startTime

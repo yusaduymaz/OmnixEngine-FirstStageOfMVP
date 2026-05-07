@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import {
   X,
@@ -113,11 +113,7 @@ function CopyBtn({ text }: { text: string }) {
 
 // ── Portal Modal ───────────────────────────────────────────────
 function ModalPortal({ children }: { children: React.ReactNode }) {
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-  if (!mounted) return null
+  if (typeof window === 'undefined') return null
   return createPortal(children, document.body)
 }
 

@@ -3,7 +3,6 @@ import { generateObject } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 import { z } from 'zod'
 import { chargeCredits } from '@/lib/billing/charge'
-import { tokensToCredits, tokensToUsd } from '@/lib/billing/credit-cost'
 import { moduleCostOperations } from '@/lib/billing/credits'
 import { InventorySkillInput, InventoryResult, StockHealth, InventoryRecommendation } from '../types'
 
@@ -14,7 +13,7 @@ export class InventorySkillError extends Error {
   }
 }
 
-async function resolveUser(clerkId: string, supabase: any) {
+async function resolveUser(clerkId: string, supabase: ReturnType<typeof getSupabaseAdmin>) {
   const { data: user, error } = await supabase
     .from('users')
     .select('id, credits_used, credits_limit')
@@ -46,7 +45,7 @@ export async function inventorySkill(input: InventorySkillInput): Promise<Invent
   const openrouter = createOpenAI({ apiKey: openrouterKey, baseURL: 'https://openrouter.ai/api/v1' })
   const modelId = 'anthropic/claude-3-5-sonnet'
 
-  const { object: result, usage } = await generateObject({
+  const { object: result } = await generateObject({
     model: openrouter(modelId),
     schema: z.object({
       dailySalesAvg: z.number(),
@@ -74,11 +73,6 @@ export async function inventorySkill(input: InventorySkillInput): Promise<Invent
       4. Türkçe stratejik bir analiz (aiInsights) yaz.
     `
   })
-
-  const inputTokens = (usage as any).promptTokens ?? (usage as any).inputTokens ?? 0
-  const outputTokens = (usage as any).completionTokens ?? (usage as any).outputTokens ?? 0
-  const credits = tokensToCredits(modelId, inputTokens, outputTokens)
-  const costUsd = tokensToUsd(modelId, inputTokens, outputTokens)
 
   const finalResult: InventoryResult = {
     currentStock: input.currentStock,

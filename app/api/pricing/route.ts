@@ -2,6 +2,39 @@ import { auth } from '@clerk/nextjs/server'
 import { pricingSkill } from '@/agents/pricing/skills/competitor.skill'
 import { PricingSkillInput } from '@/agents/pricing/types'
 import { requireFeature } from '@/lib/billing/feature-gates'
+import { z } from 'zod'
+
+const PricingRequestSchema = z.object({
+  productName: z.string().min(1, 'Ürün adı gereklidir.'),
+  sourceUrl: z.string().optional(),
+  basePrice: z.coerce.number(),
+  currency: z.string().optional().default('TRY'),
+  targetPlatforms: z.array(z.string()).optional().default(['trendyol']),
+  costs: z.object({
+    shipping: z.coerce.number().optional(),
+    other: z.coerce.number().optional(),
+    taxRate: z.coerce.number().optional(),
+  }).optional(),
+})
+
+function getErrorResponse(error: unknown, fallback: string): { message: string; status: number } {
+  if (error instanceof z.ZodError) {
+    return {
+      message: error.issues[0]?.message ?? fallback,
+      status: 400,
+    }
+  }
+
+  if (error instanceof Error) {
+    const statusCode = (error as Error & { statusCode?: unknown }).statusCode
+    return {
+      message: error.message || fallback,
+      status: typeof statusCode === 'number' ? statusCode : 500,
+    }
+  }
+
+  return { message: fallback, status: 500 }
+}
 
 export async function POST(req: Request) {
   try {
@@ -12,31 +45,27 @@ export async function POST(req: Request) {
 
     await requireFeature(userId, 'pricingAgent')
 
-    const body = await req.json()
-    
-    // Basit validasyon
-    if (!body.productName || !body.basePrice) {
-      return Response.json({ error: 'Ürün adı ve fiyat gereklidir.' }, { status: 400 })
-    }
+    const parsedBody = PricingRequestSchema.parse(await req.json())
 
     const input: PricingSkillInput = {
       userId,
-      productName: body.productName,
-      sourceUrl: body.sourceUrl,
-      basePrice: Number(body.basePrice),
-      currency: body.currency || 'TRY',
-      targetPlatforms: body.targetPlatforms || ['trendyol'],
-      costs: body.costs
+      productName: parsedBody.productName,
+      sourceUrl: parsedBody.sourceUrl,
+      basePrice: parsedBody.basePrice,
+      currency: parsedBody.currency,
+      targetPlatforms: parsedBody.targetPlatforms,
+      costs: parsedBody.costs,
     }
 
     const result = await pricingSkill(input)
 
     return Response.json(result)
-  } catch (error: any) {
-    console.error('[Pricing API] Hata:', error)
+  } catch (err: unknown) {
+    const { message, status } = getErrorResponse(err, 'Fiyat analizi sırasında bir hata oluştu.')
+    console.error('[Pricing API] Hata:', err)
     return Response.json(
-      { error: error.message || 'Fiyat analizi sırasında bir hata oluştu.' },
-      { status: error.statusCode || 500 }
+      { error: message },
+      { status }
     )
   }
 }

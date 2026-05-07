@@ -4,6 +4,10 @@ import { useState, useRef } from 'react'
 import { Upload, Link as LinkIcon, Image as ImageIcon, Wand2, Download, Loader2, ArrowRight } from 'lucide-react'
 import type { ImageAction, ImageProcessResult } from '@/agents/image/types/process.types'
 
+function getErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback
+}
+
 export default function ImageStudioPage() {
   const [activeTab, setActiveTab] = useState<'upload' | 'url'>('url')
   const [imageUrlInput, setImageUrlInput] = useState('')
@@ -73,8 +77,8 @@ export default function ImageStudioPage() {
         }
         
         sourceImage = uploadData.url
-      } catch (err: any) {
-        setErrorMsg(err.message || 'Dosya yükleme sırasında hata oluştu.')
+      } catch (err: unknown) {
+        setErrorMsg(getErrorMessage(err, 'Dosya yükleme sırasında hata oluştu.'))
         setIsLoading(false)
         return
       }
@@ -100,8 +104,8 @@ export default function ImageStudioPage() {
 
       setResult(data)
       window.scrollTo({ top: 500, behavior: 'smooth' })
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Bilinmeyen bir hata oluştu.')
+    } catch (err: unknown) {
+      setErrorMsg(getErrorMessage(err, 'Bilinmeyen bir hata oluştu.'))
     } finally {
       setIsLoading(false)
     }
@@ -160,7 +164,7 @@ export default function ImageStudioPage() {
               <div className="p-6">
                 {activeTab === 'url' ? (
                   <div>
-                    <label className="block text-sm font-medium text-[#1A1A2E] mb-1.5">Görsel URL'si <span className="text-[#FF6B35]">*</span></label>
+                    <label className="block text-sm font-medium text-[#1A1A2E] mb-1.5">Görsel URL&#39;si <span className="text-[#FF6B35]">*</span></label>
                     <input
                       type="url"
                       value={imageUrlInput}
@@ -283,7 +287,7 @@ export default function ImageStudioPage() {
                   <ImageIcon className="w-8 h-8 text-slate-300" />
                 </div>
                 <p className="text-[#1A1A2E] font-medium">Görsel Bekleniyor</p>
-                <p className="text-[#9E9EA8] text-sm max-w-xs mx-auto mt-1">İşlemi başlattığınızda "Öncesi / Sonrası" kıyaslama ekranı burada belirecek.</p>
+                <p className="text-[#9E9EA8] text-sm max-w-xs mx-auto mt-1">İşlemi başlattığınızda &quot;Öncesi / Sonrası&quot; kıyaslama ekranı burada belirecek.</p>
               </div>
             )}
 

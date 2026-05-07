@@ -13,7 +13,9 @@ const InviteSchema = z.object({
 
 const INVITE_TTL_DAYS = 7
 
-async function ensureWorkspaceManager(supabase: any, userClerkId: string, workspaceId: string) {
+import { SupabaseClient } from '@supabase/supabase-js'
+
+async function ensureWorkspaceManager(supabase: SupabaseClient, userClerkId: string, workspaceId: string) {
   const { data: user } = await supabase
     .from('users')
     .select('id')

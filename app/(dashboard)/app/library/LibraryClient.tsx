@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Sparkles, Clock, BarChart2, BookOpen, RefreshCw, Search, ExternalLink } from 'lucide-react'
+import { Sparkles, Clock, BarChart2, BookOpen, Search, ExternalLink } from 'lucide-react'
 import GenerationModal from './GenerationModal'
 import AnalysisModal from './AnalysisModal'
 import type { GenerationRow, AnalysisRow } from './page'

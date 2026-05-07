@@ -22,9 +22,7 @@ import {
   FileText,
   Briefcase,
   MessageSquare,
-  Mail,
   CheckCircle2,
-  Clock,
   Paperclip,
   Send,
   AlertCircle,
@@ -594,25 +592,36 @@ function UserDetailModal({
   const [form, setForm] = useState<{ plan: string; role: 'admin' | 'member'; credits_limit: number; title: string; suspended: boolean } | null>(null)
 
   useEffect(() => {
-    setLoading(true)
-    fetch(`/api/admin/users/${userId}`)
-      .then((r) => r.json())
-      .then((d: UserDetail | { hata: string }) => {
+    let active = true
+    const loadUser = async () => {
+      setLoading(true)
+      try {
+        const res = await fetch(`/api/admin/users/${userId}`)
+        const d: UserDetail | { hata: string } = await res.json()
+        
+        if (!active) return
+
         if ('hata' in d) {
           setMsg(`❌ ${d.hata}`)
-          setLoading(false)
-          return
+        } else {
+          setData(d)
+          setForm({
+            plan: d.user.plan,
+            role: d.user.role,
+            credits_limit: d.user.credits_limit,
+            title: d.user.title ?? '',
+            suspended: d.user.suspended,
+          })
         }
-        setData(d)
-        setForm({
-          plan: d.user.plan,
-          role: d.user.role,
-          credits_limit: d.user.credits_limit,
-          title: d.user.title ?? '',
-          suspended: d.user.suspended,
-        })
-        setLoading(false)
-      })
+      } catch (err) {
+        if (active) setMsg('❌ Kullanıcı bilgileri yüklenemedi')
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+    
+    loadUser()
+    return () => { active = false }
   }, [userId])
 
   const save = async () => {

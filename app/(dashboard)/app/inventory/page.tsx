@@ -52,8 +52,9 @@ export default function InventoryPage() {
 
       const data = await res.json()
       setResult(data)
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      const error = err as Error
+      setError(error.message)
     } finally {
       setLoading(false)
     }
@@ -247,7 +248,7 @@ export default function InventoryPage() {
 
                   <div className="pt-8 border-t border-white/10">
                     <p className="text-sm leading-relaxed text-white/80 italic font-medium">
-                      "{result.recommendation.reason}"
+                      &ldquo;{result.recommendation.reason}&rdquo;
                     </p>
                   </div>
 

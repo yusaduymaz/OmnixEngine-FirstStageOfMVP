@@ -8,37 +8,48 @@ export default function AcceptInvitePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
+  const tokenMissingMessage = 'Davet bağlantısı geçersiz: token bulunamadı.'
 
-  const [status, setStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle')
-  const [message, setMessage] = useState<string>('')
+  const [status, setStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>(token ? 'loading' : 'error')
+  const [message, setMessage] = useState<string>(token ? '' : tokenMissingMessage)
 
   useEffect(() => {
+    let active = true
+    
     if (!token) {
-      setStatus('error')
-      setMessage('Davet bağlantısı geçersiz: token bulunamadı.')
       return
     }
-    setStatus('loading')
-    fetch('/api/workspaces/accept-invite', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token }),
-    })
-      .then(async (res) => {
+
+    const acceptInvite = async () => {
+      setStatus('loading')
+      try {
+        const res = await fetch('/api/workspaces/accept-invite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token }),
+        })
         const data = await res.json().catch(() => ({}))
+        
+        if (!active) return
+
         if (res.ok) {
           setStatus('ok')
           setMessage('Davet başarıyla kabul edildi. Yönlendiriliyorsunuz...')
-          setTimeout(() => router.push('/app'), 1500)
+          setTimeout(() => { if (active) router.push('/app') }, 1500)
         } else {
           setStatus('error')
           setMessage(data.message ?? 'Davet kabul edilemedi.')
         }
-      })
-      .catch(() => {
-        setStatus('error')
-        setMessage('Sunucuya ulaşılamadı.')
-      })
+      } catch {
+        if (active) {
+          setStatus('error')
+          setMessage('Sunucuya ulaşılamadı.')
+        }
+      }
+    }
+
+    acceptInvite()
+    return () => { active = false }
   }, [token, router])
 
   return (

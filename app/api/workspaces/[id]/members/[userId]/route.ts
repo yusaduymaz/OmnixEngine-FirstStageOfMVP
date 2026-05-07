@@ -8,7 +8,9 @@ const RoleSchema = z.object({
   role: z.enum(['admin', 'editor', 'viewer']),
 })
 
-async function ensureManager(supabase: any, clerkId: string, workspaceId: string) {
+import { SupabaseClient } from '@supabase/supabase-js'
+
+async function ensureManager(supabase: SupabaseClient, clerkId: string, workspaceId: string) {
   const { data: actor } = await supabase
     .from('users')
     .select('id')

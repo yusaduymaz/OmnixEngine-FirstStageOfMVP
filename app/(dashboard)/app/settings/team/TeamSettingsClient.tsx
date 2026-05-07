@@ -107,7 +107,7 @@ export default function TeamSettingsClient({ workspaces }: { workspaces: Workspa
         <h1 className="text-2xl font-bold text-[#1A1A2E]">Takımlar</h1>
         <div className="rounded-2xl border border-[#E8E4DC] bg-white p-6 shadow-sm">
           <p className="text-sm text-[#6B6B7B]">
-            Takım davet edebilmek için en az bir workspace'in sahibi veya yöneticisi olmanız gerekiyor.
+            Takım davet edebilmek için en az bir workspace&apos;in sahibi veya yöneticisi olmanız gerekiyor.
           </p>
         </div>
       </div>
@@ -162,7 +162,7 @@ export default function TeamSettingsClient({ workspaces }: { workspaces: Workspa
           />
           <select
             value={role}
-            onChange={(e) => setRole(e.target.value as any)}
+            onChange={(e) => setRole(e.target.value as 'admin' | 'editor' | 'viewer')}
             className="h-10 rounded-xl border border-[#E8E4DC] bg-white px-3 text-sm outline-none"
           >
             <option value="admin">Admin</option>

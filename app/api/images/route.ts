@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       const fileName = `${uuidv4()}_${file.name}`
       const bucketName = 'product-images'
 
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from(bucketName)
         .upload(`user-uploads/${userId}/${fileName}`, Buffer.from(buffer), {
           contentType: file.type || 'image/jpeg',
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
         const fileName = `${uuidv4()}_${Date.now()}.jpg`
         const bucketName = 'product-images'
 
-        const { data, error } = await supabase.storage
+        const { error } = await supabase.storage
           .from(bucketName)
           .upload(`user-uploads/${userId}/${fileName}`, Buffer.from(buffer), {
             contentType: contentType,
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
           fileName: fileName,
           source: 'url'
         })
-      } catch (urlErr: any) {
+      } catch (urlErr: unknown) {
         console.error('[Images API] URL fetch error:', urlErr)
         return NextResponse.json(
           { error: 'Görsel URL\'sinden yüklenemedi. Lütfen geçerli bir URL sağlayınız.' },
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
         )
       }
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[Images API] Error:', err)
     return NextResponse.json(
       { error: 'Görsel yükleme sırasında bir hata oluştu.' },

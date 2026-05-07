@@ -238,63 +238,68 @@ export default function AuditCenter() {
               { id: 'content', label: 'İçerik Analizi', icon: SearchCode, data: result?.content, cost: '~3.000 kredi' },
               { id: 'pricing', label: 'Fiyat Rekabeti', icon: TrendingUp, data: result?.pricing, cost: '~8.000 kredi' },
               { id: 'inventory', label: 'Stok Sağlığı', icon: Package, data: result?.inventory, cost: '~4.000 kredi' }
-            ].map((agent) => (
-              <div key={agent.id} className="bg-white border border-slate-100 rounded-[24px] p-5 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-2.5 rounded-xl ${progress[agent.id] === 'completed' ? 'bg-green-50 text-green-600' :
-                      progress[agent.id] === 'loading' ? 'bg-orange-50 text-orange-600 animate-pulse' :
-                        'bg-slate-50 text-slate-400'
-                    }`}>
-                    <agent.icon size={22} />
+            ].map((agent) => {
+              const contentData = agent.id === 'content' ? (agent.data as AuditResult['content']) : null;
+              const pricingData = agent.id === 'pricing' ? (agent.data as AuditResult['pricing']) : null;
+              const inventoryData = agent.id === 'inventory' ? (agent.data as AuditResult['inventory']) : null;
+
+              return (
+                <div key={agent.id} className="bg-white border border-slate-100 rounded-[24px] p-5 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`p-2.5 rounded-xl ${progress[agent.id] === 'completed' ? 'bg-green-50 text-green-600' :
+                        progress[agent.id] === 'loading' ? 'bg-orange-50 text-orange-600 animate-pulse' :
+                          'bg-slate-50 text-slate-400'
+                      }`}>
+                      <agent.icon size={22} />
+                    </div>
+                    {progress[agent.id] === 'completed' ? (
+                      <div className="bg-green-500 rounded-full p-0.5"><CheckCircle2 size={12} className="text-white" /></div>
+                    ) : progress[agent.id] === 'loading' ? (
+                      <Loader2 size={16} className="text-orange-500 animate-spin" />
+                    ) : null}
                   </div>
-                  {progress[agent.id] === 'completed' ? (
-                    <div className="bg-green-500 rounded-full p-0.5"><CheckCircle2 size={12} className="text-white" /></div>
-                  ) : progress[agent.id] === 'loading' ? (
-                    <Loader2 size={16} className="text-orange-500 animate-spin" />
-                  ) : null}
-                </div>
 
-                <div className="flex items-baseline justify-between">
-                  <h4 className="text-sm font-bold text-slate-900">{agent.label}</h4>
-                  <span className="text-[10px] text-slate-400">{agent.cost}</span>
-                </div>
+                  <div className="flex items-baseline justify-between">
+                    <h4 className="text-sm font-bold text-slate-900">{agent.label}</h4>
+                    <span className="text-[10px] text-slate-400">{agent.cost}</span>
+                  </div>
 
-                <div className="mt-2">
-                  {progress[agent.id] === 'loading' ? (
-                    <div className="space-y-1.5">
-                      <div className="h-3 w-3/4 bg-slate-50 rounded animate-pulse" />
-                      <div className="h-2 w-1/2 bg-slate-50 rounded animate-pulse" />
-                    </div>
-                  ) : progress[agent.id] === 'completed' ? (
-                    <div className="text-[11px] text-slate-500 font-medium leading-relaxed">
-                      {agent.id === 'content' && (
-                        <>
-                          <span className="text-orange-600 font-bold">SEO: {agent.data?.overallScore || 85}/100</span>
-                          <br />{agent.data?.criteriaScores?.titleQuality?.status === 'pass' ? 'Başlık Optimize' : 'Başlık Geliştirilmeli'}
-                        </>
-                      )}
-                      {agent.id === 'pricing' && (
-                        <>
-                          <span className={`${agent.data?.marketPosition === 'cheaper' ? 'text-green-600' : 'text-orange-600'} font-bold`}>
-                            {agent.data?.marketPosition === 'cheaper' ? 'Avantajlı' : 'Pahalı'}
-                          </span>
-                          <br />Rakip: {agent.data?.competitors?.[0]?.price || '—'} {currencyInfo.symbol}
-                        </>
-                      )}
-                      {agent.id === 'inventory' && (
-                        <>
-                          <span className="text-blue-600 font-bold">{agent.data?.stockHealth === 'healthy' ? 'Güvenli' : 'Kritik'}</span>
-                          <br />{agent.data?.stockoutPrediction || '—'}
-                        </>
-                      )}
-                      {agent.id === 'image' && <span className="text-slate-400">Görseller Optimize</span>}
-                    </div>
-                  ) : (
-                    <span className="text-[11px] text-slate-300">Bekleniyor...</span>
-                  )}
+                  <div className="mt-2">
+                    {progress[agent.id] === 'loading' ? (
+                      <div className="space-y-1.5">
+                        <div className="h-3 w-3/4 bg-slate-50 rounded animate-pulse" />
+                        <div className="h-2 w-1/2 bg-slate-50 rounded animate-pulse" />
+                      </div>
+                    ) : progress[agent.id] === 'completed' ? (
+                      <div className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                        {agent.id === 'content' && contentData && (
+                          <>
+                            <span className="text-orange-600 font-bold">SEO: {contentData.overallScore || 85}/100</span>
+                            <br />{contentData.criteriaScores?.titleQuality?.status === 'pass' ? 'Başlık Optimize' : 'Başlık Geliştirilmeli'}
+                          </>
+                        )}
+                        {agent.id === 'pricing' && pricingData && (
+                          <>
+                            <span className={`${pricingData.marketPosition === 'cheaper' ? 'text-green-600' : 'text-orange-600'} font-bold`}>
+                              {pricingData.marketPosition === 'cheaper' ? 'Avantajlı' : 'Pahalı'}
+                            </span>
+                            <br />Rakip: {pricingData.competitors?.[0]?.price || '—'} {currencyInfo.symbol}
+                          </>
+                        )}
+                        {agent.id === 'inventory' && inventoryData && (
+                          <>
+                            <span className="text-blue-600 font-bold">{inventoryData.stockHealth === 'healthy' ? 'Güvenli' : 'Kritik'}</span>
+                            <br />{inventoryData.stockoutPrediction || '—'}
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-[11px] text-slate-300">Bekleniyor...</span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </motion.div>
         )}
       </AnimatePresence>

@@ -52,9 +52,15 @@ export default async function TeamSettingsPage() {
     .eq('user_id', user.id)
     .in('role', ['owner', 'admin'])
 
-  const workspaces = (memberships ?? [])
-    .map((m: any) => m.workspaces)
-    .filter(Boolean)
+  interface MembershipResult {
+    workspace_id: string
+    role: string
+    workspaces: { id: string; name: string; owner_id: string } | null
+  }
+
+  const workspaces = ((memberships as unknown as MembershipResult[]) ?? [])
+    .map((m) => m.workspaces)
+    .filter((w): w is NonNullable<typeof w> => !!w)
 
   return <TeamSettingsClient workspaces={workspaces} />
 }

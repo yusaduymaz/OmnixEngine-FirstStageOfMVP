@@ -189,9 +189,6 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
   })
   type AnalyzeModelResult = z.infer<typeof schema>
   let resultObject: AnalyzeModelResult | null = null
-  let inputTokens = 0
-  let outputTokens = 0
-  let modelUsed = 'openrouter/free'
 
   try {
     if (!openrouterKey) throw new Error('OpenRouter key missing, skip to Groq')
@@ -207,9 +204,7 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
       temperature: 0.3
     })
     resultObject = object
-    const usageTokens = getUsageTokens(usage)
-    inputTokens = usageTokens.inputTokens
-    outputTokens = usageTokens.outputTokens
+    resultObject = object
     console.log('[Analyze] Analiz tamamlandı (OpenRouter), skor:', resultObject.overallScore)
   } catch (openrouterErr: unknown) {
     console.warn('[Analyze] OpenRouter error, trying Groq fallback...', getErrorMessage(openrouterErr))
@@ -243,9 +238,6 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
 
       const parsed = schema.parse(JSON.parse(jsonMatch[0]))
       resultObject = parsed
-      inputTokens = response.usage?.prompt_tokens ?? 0
-      outputTokens = response.usage?.completion_tokens ?? 0
-      modelUsed = 'llama-3.3-70b-versatile (Groq)'
       console.log('[Analyze] Analiz tamamlandı (Groq Llama), skor:', resultObject.overallScore)
     } catch (groqErr: unknown) {
       console.warn('[Analyze] Groq fallback error:', getErrorMessage(groqErr))

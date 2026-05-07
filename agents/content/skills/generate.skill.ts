@@ -15,15 +15,21 @@
  */
 
 import { currentUser } from '@clerk/nextjs/server'
-import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAI } from '@ai-sdk/openai'
 import { streamText } from 'ai'
 import Groq from 'groq-sdk'
-import { buildSystemPrompt, buildUserMessage, type Tone, type PlatformId } from '@/prompts/system'
+import { buildSystemPrompt, buildUserMessage, type Tone } from '@/prompts/system'
 import { getSupabaseAdmin } from '@/lib/supabase/server'
 import { chargeCredits } from '@/lib/billing/charge'
 import { moduleCostOperations } from '@/lib/billing/credits'
 import type { GenerateSkillInput, SupabaseUserRow, ParsedTitle, ExtractedJSON } from '../types/generate.types'
+
+type UsageLike = {
+  promptTokens?: number
+  inputTokens?: number
+  completionTokens?: number
+  outputTokens?: number
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // BÖLÜM 1: JSON ÇIKARMA STRATEJİLERİ
@@ -188,9 +194,9 @@ async function tryOpenRouterStream(
       controller.enqueue(encoder.encode('.'))
     }
 
-    const usage = await openrouterResult.usage
-    const inputTokens = (usage as any)?.promptTokens ?? (usage as any)?.inputTokens ?? 0
-    const outputTokens = (usage as any)?.completionTokens ?? (usage as any)?.outputTokens ?? 0
+    const usage = (await openrouterResult.usage) as UsageLike | undefined
+    const inputTokens = usage?.promptTokens ?? usage?.inputTokens ?? 0
+    const outputTokens = usage?.completionTokens ?? usage?.outputTokens ?? 0
     const modelUsed = 'openrouter/free (OpenRouter)'
 
     console.log('[Generate] OpenRouter başarılı:', {
