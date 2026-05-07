@@ -21,7 +21,8 @@ import { streamText } from 'ai'
 import Groq from 'groq-sdk'
 import { buildSystemPrompt, buildUserMessage, type Tone, type PlatformId } from '@/prompts/system'
 import { getSupabaseAdmin } from '@/lib/supabase/server'
-import { CREDIT_COSTS } from '@/lib/billing/credit-display'
+import { chargeCredits } from '@/lib/billing/charge'
+import { moduleCostOperations } from '@/lib/billing/credits'
 import type { GenerateSkillInput, SupabaseUserRow, ParsedTitle, ExtractedJSON } from '../types/generate.types'
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -294,7 +295,7 @@ async function saveGenerationAndDeductCredit(params: {
     typeof parsedResult?.seo_score === 'number' ? parsedResult.seo_score : null
 
   // Üretim kaydı
-  const { error: dbError } = await supabase.from('generations').insert({
+  const { data: savedGen, error: dbError } = await supabase.from('generations').insert({
     user_id: user.id,
     product_name: input.productName,
     category_path: input.category ?? null,
@@ -310,38 +311,19 @@ async function saveGenerationAndDeductCredit(params: {
     model_used: modelUsed,
     generation_ms: Date.now() - startTime,
     status: parsedResult ? 'completed' : 'failed',
-  })
+  }).select('id').single()
 
   if (dbError) {
-    console.error('[Generate] DB kayıt hatası:', {
-      message: dbError.message,
-      code: dbError.code,
-      details: dbError.details,
-      hint: dbError.hint,
-    })
-  } else {
-    console.log('[Generate] DB kayıt başarılı. Status:', parsedResult ? 'completed' : 'failed')
+    console.error('[Generate] DB kayıt hatası:', dbError.message)
+    return
   }
 
-  // Flat kredi maliyeti (öngörülebilir, UI ile tutarlı)
-  const microCredits = CREDIT_COSTS.generate
-
-  const { error: rpcError } = await supabase
-    .rpc('increment_credits', { user_uuid: user.id, amount: microCredits })
-  if (rpcError) console.error('[Generate] Kredi düşümü hatası:', rpcError)
-
-  // Audit transaction kaydı
-  await supabase.from('credit_transactions').insert({
-    user_id: user.id,
-    amount: -microCredits,
-    type: 'usage',
-    module: 'generate',
-    reference: null,
-    tokens_input: inputTokens,
-    tokens_output: outputTokens,
-    model: modelUsed,
-    cost_usd: microCredits / 200, // Reverse micro-credits to USD (1 USD = 200 micro-credits)
-  })
+  // Atomik kredi düşümü (chargeCredits)
+  try {
+    await chargeCredits(input.userId, 'generate', savedGen?.id)
+  } catch (err) {
+    console.error('[Generate] Kredi düşümü hatası:', err)
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -380,9 +362,11 @@ export async function generateSkill(input: GenerateSkillInput): Promise<Readable
   // ── 1. Kullanıcı çek / oluştur ──
   const user = await resolveUser(input.userId, supabase)
 
-  // ── 2. Kredi kontrolü ──
-  if (user.credits_limit - user.credits_used <= 0) {
-    throw new GenerateSkillError('Krediniz tükendi.', 403)
+  // ── 2. Kredi kontrolü (Pre-flight) ──
+  const cost = moduleCostOperations('generate') * 5000
+  const remaining = (user.credits_limit || 0) - (user.credits_used || 0)
+  if (remaining < cost) {
+    throw new GenerateSkillError(`Yetersiz bakiye. Bu işlem için ${moduleCostOperations('generate')} işlem hakkı gerekiyor.`, 403)
   }
 
   // ── 3. Prompt'ları hazırla ──

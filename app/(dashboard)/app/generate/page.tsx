@@ -558,7 +558,7 @@ export default function GeneratePage() {
                   </>
                 )}
               </button>
-              <p className="text-center text-xs text-[#9E9EA8]">~5.000 kredi/işlem</p>
+              <p className="text-center text-xs text-[#9E9EA8]">1 işlem</p>
             </form>
           </div>
 

@@ -2,7 +2,8 @@ import { getSupabaseAdmin } from '@/lib/supabase/server'
 import { generateObject } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 import { z } from 'zod'
-import { tokensToCredits, tokensToUsd, scrapeCredits } from '@/lib/billing/credit-cost'
+import { chargeCredits } from '@/lib/billing/charge'
+import { moduleCostOperations } from '@/lib/billing/credits'
 import { PricingSkillInput, PricingResult, CompetitorData, MarginAnalysis } from '../types'
 import { scrapeUrl } from '@/agents/content/utils/scrape'
 
@@ -32,8 +33,10 @@ export async function pricingSkill(input: PricingSkillInput): Promise<PricingRes
 
   // 1. Kullanıcı ve Kredi Kontrolü
   const user = await resolveUser(input.userId, supabase)
-  if (user.credits_limit - user.credits_used <= 0) {
-    throw new PricingSkillError('Krediniz tükendi.', 403)
+  const cost = moduleCostOperations('pricing') * 5000
+  const remaining = (user.credits_limit || 0) - (user.credits_used || 0)
+  if (remaining < cost) {
+    throw new PricingSkillError(`Yetersiz bakiye. Bu işlem için ${moduleCostOperations('pricing')} işlem hakkı gerekiyor.`, 403)
   }
 
   // 2. Sayfa Analizi (Opsiyonel)
@@ -118,48 +121,28 @@ export async function pricingSkill(input: PricingSkillInput): Promise<PricingRes
     analysisMs: Date.now() - startTime
   }
 
-  // 5. Token-bazlı kredi muhasebesi
-  const inputTokens = (usage as any).promptTokens ?? (usage as any).inputTokens ?? 0
-  const outputTokens = (usage as any).completionTokens ?? (usage as any).outputTokens ?? 0
-  const aiCredits = tokensToCredits(modelId, inputTokens, outputTokens)
-  const totalCredits = aiCredits + (input.sourceUrl ? scrapeCredits() : 0)
-  const costUsd = tokensToUsd(modelId, inputTokens, outputTokens)
-
-  // 6. Veritabanına Kayıt
+  // 5. Veritabanına Kayıt ve Kredi Düşümü
   try {
-    const [pricingSave] = await Promise.all([
-      supabase.from('pricing_analyses').insert({
-        user_id: user.id,
-        product_name: input.productName,
-        source_url: input.sourceUrl || null,
-        base_price: input.basePrice,
-        currency: input.currency,
-        competitors: finalResult.competitors,
-        margin_analysis: finalResult.marginAnalysis,
-        suggested_price: finalResult.suggestedPrice,
-        market_position: finalResult.marketPosition,
-        ai_feedback: finalResult.aiFeedback,
-        analysis_ms: finalResult.analysisMs,
-        credits_charged: totalCredits
-      }).select('id').single(),
-      supabase.rpc('increment_credits', { user_uuid: user.id, amount: totalCredits })
-    ])
-
-    if (pricingSave.data) {
-      finalResult.id = pricingSave.data.id
-    }
-
-    await supabase.from('credit_transactions').insert({
+    const { data: savedPricing, error: saveError } = await supabase.from('pricing_analyses').insert({
       user_id: user.id,
-      amount: -totalCredits,
-      type: 'usage',
-      module: 'pricing',
-      reference: pricingSave.data?.id ?? null,
-      tokens_input: inputTokens,
-      tokens_output: outputTokens,
-      model: modelId,
-      cost_usd: costUsd,
-    })
+      product_name: input.productName,
+      source_url: input.sourceUrl || null,
+      base_price: input.basePrice,
+      currency: input.currency,
+      competitors: finalResult.competitors,
+      margin_analysis: finalResult.marginAnalysis,
+      suggested_price: finalResult.suggestedPrice,
+      market_position: finalResult.marketPosition,
+      ai_feedback: finalResult.aiFeedback,
+      analysis_ms: finalResult.analysisMs,
+      credits_charged: cost
+    }).select('id').single()
+
+    if (saveError) throw saveError
+    finalResult.id = savedPricing.id
+
+    // Kredi Düşümü
+    await chargeCredits(input.userId, 'pricing', savedPricing.id)
   } catch (err) {
     console.error('[Pricing] DB kaydı sırasında hata:', err)
   }

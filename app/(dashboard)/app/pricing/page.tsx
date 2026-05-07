@@ -154,7 +154,7 @@ export default function PricingPage() {
                 <>Analiz Et <ArrowRight className="w-4 h-4" /></>
               )}
             </button>
-            <p className="text-center text-xs text-[#9E9EA8]">~8.000 kredi/işlem</p>
+            <p className="text-center text-xs text-[#9E9EA8]">2 işlem</p>
           </div>
         </form>
         {error && (

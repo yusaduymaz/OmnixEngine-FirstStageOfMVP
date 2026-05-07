@@ -145,7 +145,7 @@ export default function InventoryPage() {
                 <>Hesapla <BarChart2 className="w-4 h-4" /></>
               )}
             </button>
-            <p className="text-center text-xs text-[#9E9EA8]">~4.000 kredi/işlem</p>
+            <p className="text-center text-xs text-[#9E9EA8]">1 işlem</p>
           </div>
         </form>
         {error && (

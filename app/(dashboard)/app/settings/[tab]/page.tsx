@@ -27,6 +27,7 @@ import {
 import type { PlanId, PaidPlanId } from '@/lib/stripe/plans'
 import PricingModal from '@/components/billing/PricingModal'
 import { notify } from '@/lib/toast'
+import { buildCreditDisplay, formatOperationLabel, formatOperations } from '@/lib/billing/credits'
 
 interface ProfileData {
   id: string
@@ -75,9 +76,9 @@ const PLAN_LABELS: Record<string, { label: string; color: string; icon: React.Re
 }
 
 const UPGRADE_PLANS = [
-  { id: 'starter' as PlanId, name: 'Starter', price: '₺299/ay', credits: '2.500.000 kredi (~500 işlem/ay)', features: ['2 platform', 'İçerik kütüphanesi', 'E-posta desteği'] },
-  { id: 'growth' as PlanId, name: 'Growth', price: '₺799/ay', credits: '10.000.000 kredi (~2.000 işlem/ay)', features: ['Toplu yükleme', 'API erişimi', 'Öncelikli destek'] },
-  { id: 'agency' as PlanId, name: 'Agency', price: '₺2.499/ay', credits: '50.000.000 kredi (~10.000 işlem/ay)', features: ['Workspace', 'SLA desteği', 'Özel entegrasyon'] },
+  { id: 'starter' as PlanId, name: 'Starter', price: '₺299/ay', credits: '500 işlem/ay', features: ['2 platform', 'İçerik kütüphanesi', 'E-posta desteği'] },
+  { id: 'growth' as PlanId, name: 'Growth', price: '₺799/ay', credits: '2.000 işlem/ay', features: ['Toplu yükleme', 'API erişimi', 'Öncelikli destek'] },
+  { id: 'agency' as PlanId, name: 'Agency', price: '₺2.499/ay', credits: '10.000 işlem/ay', features: ['Workspace', 'SLA desteği', 'Özel entegrasyon'] },
 ]
 
 export default function SettingsTabbedPage() {
@@ -638,23 +639,30 @@ export default function SettingsTabbedPage() {
 
                   {/* Kredi progress bar */}
                   <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-[#1A1A2E]">Kredi Kullanımı</span>
-                      <span className="text-sm text-[#6B6B7B]">
-                        {billingData.creditsUsed} / {billingData.creditsLimit} kredi
-                      </span>
-                    </div>
-                    <div className="h-2.5 rounded-full bg-[#E8E4DC]">
-                      <div
-                        className="h-2.5 rounded-full bg-[#FF6B35] transition-all"
-                        style={{
-                          width: `${Math.min(100, (billingData.creditsUsed / billingData.creditsLimit) * 100)}%`,
-                        }}
-                      />
-                    </div>
-                    <p className="mt-1.5 text-xs text-[#9E9EA8]">
-                      {billingData.creditsLimit - billingData.creditsUsed} kredi kaldı
-                    </p>
+                    {(() => {
+                      const display = buildCreditDisplay(billingData.creditsUsed, billingData.creditsLimit)
+                      return (
+                        <>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-semibold text-[#1A1A2E]">İşlem Kullanımı</span>
+                            <span className="text-sm text-[#6B6B7B]">
+                              {formatOperations(display.operationsUsed, display.operationsLimit)}
+                            </span>
+                          </div>
+                          <div className="h-2.5 rounded-full bg-[#E8E4DC]">
+                            <div
+                              className="h-2.5 rounded-full bg-[#FF6B35] transition-all"
+                              style={{
+                                width: `${display.usagePercent}%`,
+                              }}
+                            />
+                          </div>
+                          <p className="mt-1.5 text-xs text-[#9E9EA8]">
+                            {formatOperationLabel(display.operationsRemaining)} kaldı
+                          </p>
+                        </>
+                      )
+                    })()}
                   </div>
                 </div>
               ) : (
@@ -705,7 +713,7 @@ export default function SettingsTabbedPage() {
                       <p className="font-bold text-[#1A1A2E] text-base">Enterprise</p>
                       <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">Özel Fiyatlandırma</span>
                     </div>
-                    <p className="text-xs text-[#6B6B7B]">500.000.000 kredi (100.000+ işlem/ay)</p>
+                    <p className="text-xs text-[#6B6B7B]">100.000+ işlem/ay</p>
                     <div className="flex flex-wrap gap-3 mt-2">
                       {['Sınırsız Workspace', 'SLA Garantisi', 'Dedikeli Destek', 'API + Webhook', 'Team Sistemi'].map((f) => (
                         <span key={f} className="flex items-center gap-1 text-xs text-green-700">
@@ -743,7 +751,7 @@ export default function SettingsTabbedPage() {
                           ? <CheckCircle2 size={14} />
                           : <XCircle size={14} />
                         }
-                        {tx.amount > 0 ? `+${tx.amount}` : tx.amount} kredi
+                        {tx.amount > 0 ? `+${Math.round(tx.amount / 5000)}` : Math.round(tx.amount / 5000)} işlem
                       </div>
                     </div>
                   ))}

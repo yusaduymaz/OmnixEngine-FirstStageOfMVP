@@ -22,6 +22,7 @@ import {
   ArrowUpRight,
   Wand2
 } from 'lucide-react'
+import { buildCreditDisplay, formatOperations } from '@/lib/billing/credits'
 
 export const metadata: Metadata = {
   title: 'Dashboard — Omnix Engine',
@@ -91,7 +92,7 @@ export default async function DashboardPage() {
     recentGenerations = (genData ?? []) as RecentGen[]
   }
 
-  const creditsRemaining = (user?.credits_limit ?? 50) - (user?.credits_used ?? 0)
+  const display = buildCreditDisplay(user?.credits_used ?? 0, user?.credits_limit ?? 0)
   const quickActions = [
     {
       title: 'Sıfırdan Üret',
@@ -163,8 +164,8 @@ export default async function DashboardPage() {
                 <CreditCard size={18} />
               </div>
               <div className="text-xs">
-                <p className="text-[#9E9EA8] font-bold uppercase tracking-widest">Kalan Kredi</p>
-                <p className="text-[#1A1A2E] font-bold">{Math.round(creditsRemaining / 5000)} <span className="text-[#9E9EA8]">/ {Math.round((user?.credits_limit ?? 0) / 5000)} işlem</span></p>
+                <p className="text-[#9E9EA8] font-bold uppercase tracking-widest">Kullanım Durumu</p>
+                <p className="text-[#1A1A2E] font-bold">{formatOperations(display.operationsUsed, display.operationsLimit)}</p>
               </div>
             </div>
             <div className="rounded-2xl border border-[#E8E4DC] bg-white px-4 py-3 flex items-center gap-3">

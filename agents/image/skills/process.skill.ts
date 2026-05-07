@@ -1,4 +1,6 @@
 import { getSupabaseAdmin } from '@/lib/supabase/server'
+import { chargeCredits } from '@/lib/billing/charge'
+import { moduleCostOperations } from '@/lib/billing/credits'
 import { currentUser } from '@clerk/nextjs/server'
 import { fal } from '@fal-ai/client'
 import { v4 as uuidv4 } from 'uuid'
@@ -79,10 +81,11 @@ export async function processImageSkill(input: ImageProcessInput): Promise<Image
 
   // 1. Kullanıcı ve Kredi Kontrolü
   const user = await resolveUser(input.userId, supabase)
-  const CREDITS_COST = 3
+  const cost = moduleCostOperations('image') * 5000
   
-  if (user.credits_limit - user.credits_used < CREDITS_COST) {
-    throw new ImageProcessError(`Bu işlem için ${CREDITS_COST} krediye ihtiyacınız var. Krediniz yetersiz.`, 403)
+  const remaining = (user.credits_limit || 0) - (user.credits_used || 0)
+  if (remaining < cost) {
+    throw new ImageProcessError(`Bu işlem için ${moduleCostOperations('image')} işlem hakkına ihtiyacınız var. Krediniz yetersiz.`, 403)
   }
 
   // UUID oluştur
@@ -148,8 +151,8 @@ export async function processImageSkill(input: ImageProcessInput): Promise<Image
   }
 
   // Başarı durumunda kayıt
-  await Promise.all([
-    supabase.from('images').insert({
+  try {
+    const { data: savedImage, error: saveError } = await supabase.from('images').insert({
       user_id: user.id,
       original_path: originalPublicUrl,
       processed_path: processedPublicUrl,
@@ -157,10 +160,16 @@ export async function processImageSkill(input: ImageProcessInput): Promise<Image
       ai_model_used: modelUsed,
       processing_time_ms: processingTimeMs,
       status: 'completed',
-      credits_charged: CREDITS_COST,
-    }),
-    supabase.from('users').update({ credits_used: user.credits_used + CREDITS_COST }).eq('id', user.id)
-  ])
+      credits_charged: cost,
+    }).select('id').single()
+
+    if (saveError) throw saveError
+
+    // Kredi Düşümü
+    await chargeCredits(input.userId, 'image', savedImage.id)
+  } catch (err) {
+    console.error('[Image] DB kayıt/kredi düşümü hatası:', err)
+  }
 
   return {
     originalUrl: originalPublicUrl,

@@ -263,7 +263,7 @@ export default function ImageStudioPage() {
                     </>
                   )}
                </button>
-               <p className="text-center text-xs text-[#9E9EA8] mt-1">~40 kredi/işlem (fal.ai)</p>
+               <p className="text-center text-xs text-[#9E9EA8] mt-1">1-2 işlem</p>
             </div>
           </div>
 

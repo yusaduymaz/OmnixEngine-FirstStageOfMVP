@@ -164,7 +164,7 @@ export default function PricingModal({ open, onClose, currentPlan = 'trial' }: P
                     </h3>
                     <p className="text-2xl font-extrabold text-[#1A1A2E] mt-1">{plan.price}</p>
                     <p className="text-xs text-[#6B6B7B] mt-0.5">
-                      ~{plan.approxGenerations.toLocaleString('tr-TR')} içerik üretimi/ay
+                      ~{plan.approxGenerations.toLocaleString('tr-TR')} işlem/ay
                     </p>
                   </div>
 

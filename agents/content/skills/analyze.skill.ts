@@ -3,7 +3,8 @@
  */
 import { currentUser } from '@clerk/nextjs/server'
 import { getSupabaseAdmin } from '@/lib/supabase/server'
-import { CREDIT_COSTS } from '@/lib/billing/credit-display'
+import { chargeCredits } from '@/lib/billing/charge'
+import { moduleCostOperations } from '@/lib/billing/credits'
 import { generateObject } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 import Groq from 'groq-sdk'
@@ -68,10 +69,14 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
   const startTime = Date.now()
   const supabase = getSupabaseAdmin()
 
-  // 1. Kullanıcı ve Kredi Kontrolü
+  // 1. Kullanıcı Çek / Oluştur
   const user = await resolveUser(input.userId, supabase)
-  if (user.credits_limit - user.credits_used <= 0) {
-    throw new AnalyzeSkillError('Krediniz tükendi.', 403)
+  
+  // Pre-flight check
+  const cost = moduleCostOperations('analyze') * 5000 
+  const remaining = (user.credits_limit || 0) - (user.credits_used || 0)
+  if (remaining < cost) {
+    throw new AnalyzeSkillError(`Yetersiz bakiye. Bu işlem için ${moduleCostOperations('analyze')} işlem hakkı gerekiyor.`, 403)
   }
 
   // 2. Scraping
@@ -213,53 +218,33 @@ export async function analyzeSkill(input: AnalyzeSkillInput): Promise<AnalysisRe
     }
   }
 
-  // 5. Veritabanı Kayıt ve Kredi Düşümü (Awaited)
+  // 5. Veritabanı Kayıt ve Kredi Düşümü
   const finalResult: AnalysisResult = {
     ...resultObject,
     scrapedData
   }
 
-  // Flat kredi maliyeti (öngörülebilir, UI ile tutarlı)
-  const totalCredits = CREDIT_COSTS.analyze
-
   try {
-    console.log('[Analyze] DB Kayıt denemesi:', { userId: user.id, source: input.url, credits: totalCredits })
-    const [analysisSave, creditUpdate] = await Promise.all([
-      supabase.from('analyses').insert({
-        user_id: user.id,
-        source_url: input.url,
-        target_platform: input.platforms,
-        scraped_data: scrapedData as unknown as Record<string, unknown>,
-        overall_score: finalResult.overallScore,
-        criteria_scores: finalResult.criteriaScores as unknown as Record<string, unknown>,
-        suggestions: (finalResult as any).suggestions || null,
-        analysis_ms: Date.now() - startTime,
-        credits_charged: totalCredits
-      }).select('id').single(),
-      supabase.rpc('increment_credits', { user_uuid: user.id, amount: totalCredits })
-    ])
-
-    if (analysisSave.data) {
-      finalResult.id = analysisSave.data.id
-      console.log('[Analyze] Analiz başarıyla kaydedildi, ID:', finalResult.id)
-    }
-
-    if (creditUpdate.error) {
-      console.error('[Analyze] Kredi güncelleme başarısız:', creditUpdate.error)
-    }
-
-    // Audit transaction kaydı
-    await supabase.from('credit_transactions').insert({
+    // 1. Analiz Kaydı
+    const { data: savedAnalysis, error: saveError } = await supabase.from('analyses').insert({
       user_id: user.id,
-      amount: -totalCredits,
-      type: 'usage',
-      module: 'analyze',
-      reference: analysisSave.data?.id ?? null,
-      tokens_input: inputTokens,
-      tokens_output: outputTokens,
-      model: modelUsed,
-      cost_usd: totalCredits / 200, // Reverse micro-credits to USD
-    })
+      source_url: input.url,
+      target_platform: input.platforms,
+      scraped_data: scrapedData as unknown as Record<string, unknown>,
+      overall_score: finalResult.overallScore,
+      criteria_scores: finalResult.criteriaScores as unknown as Record<string, unknown>,
+      suggestions: (finalResult as any).suggestions || null,
+      analysis_ms: Date.now() - startTime,
+      credits_charged: moduleCostOperations('analyze') * 5000
+    }).select('id').single()
+
+    if (saveError) throw saveError
+    finalResult.id = savedAnalysis.id
+
+    // 2. Kredi Düşümü (Atomik)
+    await chargeCredits(input.userId, 'analyze', savedAnalysis.id)
+
+    console.log('[Analyze] Analiz başarıyla kaydedildi ve bakiye düşüldü, ID:', finalResult.id)
   } catch (err) {
     console.error('[Analyze] DB kayıt/kredi düşümü sırasında kritik hata:', err)
   }

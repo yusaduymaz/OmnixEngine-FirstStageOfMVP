@@ -2,7 +2,8 @@ import { getSupabaseAdmin } from '@/lib/supabase/server'
 import { generateObject } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 import { z } from 'zod'
-import { tokensToCredits, tokensToUsd } from '@/lib/billing/credit-cost'
+import { chargeCredits } from '@/lib/billing/charge'
+import { moduleCostOperations } from '@/lib/billing/credits'
 import { InventorySkillInput, InventoryResult, StockHealth, InventoryRecommendation } from '../types'
 
 export class InventorySkillError extends Error {
@@ -31,8 +32,10 @@ export async function inventorySkill(input: InventorySkillInput): Promise<Invent
 
   // 1. Kullanıcı ve Kredi Kontrolü
   const user = await resolveUser(input.userId, supabase)
-  if (user.credits_limit - user.credits_used <= 0) {
-    throw new InventorySkillError('Krediniz tükendi.', 403)
+  const cost = moduleCostOperations('inventory') * 5000
+  const remaining = (user.credits_limit || 0) - (user.credits_used || 0)
+  if (remaining < cost) {
+    throw new InventorySkillError(`Yetersiz bakiye. Bu işlem için ${moduleCostOperations('inventory')} işlem hakkı gerekiyor.`, 403)
   }
 
   // 2. AI ile Tahminleme
@@ -86,41 +89,28 @@ export async function inventorySkill(input: InventorySkillInput): Promise<Invent
     analysisMs: Date.now() - startTime
   }
 
-  // 3. Veritabanı kayıt + token-bazlı kredi düşümü
+  // 3. Veritabanı kayıt + Kredi Düşümü
   try {
-    const [invSave] = await Promise.all([
-      supabase.from('inventory_reports').insert({
-        user_id: user.id,
-        product_name: input.productName,
-        sku: input.sku || null,
-        current_stock: input.currentStock,
-        min_stock_level: input.minStockLevel || 10,
-        daily_sales_avg: finalResult.dailySalesAvg,
-        days_to_stockout: finalResult.daysToStockout,
-        stock_health: finalResult.stockHealth,
-        recommendation: finalResult.recommendation,
-        ai_insights: finalResult.aiInsights,
-        analysis_ms: finalResult.analysisMs,
-        credits_charged: credits
-      }).select('id').single(),
-      supabase.rpc('increment_credits', { user_uuid: user.id, amount: credits })
-    ])
-
-    if (invSave.data) {
-      finalResult.id = invSave.data.id
-    }
-
-    await supabase.from('credit_transactions').insert({
+    const { data: savedInv, error: saveError } = await supabase.from('inventory_reports').insert({
       user_id: user.id,
-      amount: -credits,
-      type: 'usage',
-      module: 'inventory',
-      reference: invSave.data?.id ?? null,
-      tokens_input: inputTokens,
-      tokens_output: outputTokens,
-      model: modelId,
-      cost_usd: costUsd,
-    })
+      product_name: input.productName,
+      sku: input.sku || null,
+      current_stock: input.currentStock,
+      min_stock_level: input.minStockLevel || 10,
+      daily_sales_avg: finalResult.dailySalesAvg,
+      days_to_stockout: finalResult.daysToStockout,
+      stock_health: finalResult.stockHealth,
+      recommendation: finalResult.recommendation,
+      ai_insights: finalResult.aiInsights,
+      analysis_ms: finalResult.analysisMs,
+      credits_charged: cost
+    }).select('id').single()
+
+    if (saveError) throw saveError
+    finalResult.id = savedInv.id
+
+    // Kredi Düşümü
+    await chargeCredits(input.userId, 'inventory', savedInv.id)
   } catch (err) {
     console.error('[Inventory] DB kaydı hatası:', err)
   }

@@ -89,11 +89,14 @@ const NAV_ITEMS = [
   { href: '/app/settings/profile', label: 'Ayarlar', icon: IconSettings, exact: false },
 ]
 
+import { buildCreditDisplay, formatOperationLabel } from '@/lib/billing/credits'
+
 function Sidebar() {
   const pathname = usePathname()
-  const { planId, creditsRemaining, creditsLimit, isLoading } = usePlan()
+  const { planId, creditsRemaining, creditsLimit, creditsUsed, isLoading } = usePlan()
+  
+  const display = buildCreditDisplay(creditsUsed, creditsLimit)
   const showUpgrade = !isLoading && (planId === 'trial' || planId === 'starter')
-  const usagePct = creditsLimit > 0 ? Math.min(100, Math.round(((creditsLimit - creditsRemaining) / creditsLimit) * 100)) : 0
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 border-r border-orange-100/20 bg-slate-50 flex flex-col p-4 z-50">
@@ -157,15 +160,15 @@ function Sidebar() {
             <div className="flex justify-between text-xs text-slate-500 mb-1">
               <span>Kalan Kredi</span>
               <span className="font-semibold text-slate-700">
-                {Math.round(creditsRemaining / 5000).toLocaleString('tr-TR')} işlem
+                {formatOperationLabel(display.operationsRemaining)}
               </span>
             </div>
             <div className="w-full h-1.5 bg-orange-100 rounded-full mb-3">
               <div
                 className="h-1.5 rounded-full transition-all"
                 style={{
-                  width: `${Math.max(2, usagePct)}%`,
-                  background: usagePct > 80 ? '#ef4444' : 'linear-gradient(90deg,#fb923c,#f97316)'
+                  width: `${Math.max(2, display.usagePercent)}%`,
+                  background: display.usagePercent > 80 ? '#ef4444' : 'linear-gradient(90deg,#fb923c,#f97316)'
                 }}
               />
             </div>
